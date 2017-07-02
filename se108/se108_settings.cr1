@@ -1,0 +1,198 @@
+'Constants file
+'This file holds all the constatns to run the se108 program file
+'The DCU reads in the constants from this file to the GUI
+
+'do not expose to interface
+Const Port2_ComPort = 33 'SDM-SIO1, Address 1
+Const Port2_SDIPort = 7 'C7
+Const Port3_ComPort = Com3
+Const Port3_SDIPort = 7 'C7
+Const Port3_SE = 3 'SE3
+Const Port5_ComPort = ComSDC7
+Const Port6_SE = 1 'SE1
+Const Port7_SDIPort = 7 'C7
+Const Port8_ComPort = ComSDC8
+'DO NOT DELETE THE 'Start of Constants' LINE BELOW
+'Start of Constants Customization Section
+ConstTable(Configuration)
+  Const Station_Name = "POT"
+  'Const CellSchedule = "6,7,10,12,14,15,17,18,23,0"
+  Const CellSchedule = "6,18" 'on between 6am and 6pm
+  Const Port2_Mode = "EXO2_SERIAL"
+  'value="DISABLE"
+  'value="EXO2_SDI12"
+  'value="EXO2_SERIAL"
+  Const Port2_BaudRate = 9600
+  'value=9600
+  'value=19200
+  'value=38400
+  'value=57600
+  'value=115200
+  Const Port2_SDI12_Addr = "0"
+  Const Port2_ScanRate = 15  'minute
+  'min=1
+  'max=720
+  'inc=1
+  Const Port2_WarmUp = -1
+  'min=-1
+  'max=720
+  'inc=1
+
+  'do not expose the following to interface
+  Const Port2_NumWipes = 1
+  'min=1
+  'max=3
+  'inc=1
+  Const Port2_MEASNUM = 30
+  'min=1
+  'max=300
+  'inc=1
+  Const Port3_Mode = "SUNAV1"
+  'value="DISABLE"
+  'value="SUNAV1"
+  'value="SUNAV2"
+  'value="OBS501"
+  'value="SDI12"
+  'value="RS232"
+  'value="VOLTSE"
+  Const Port3_BaudRate = 38400 'baud
+  'value=9600
+  'value=19200
+  'value=38400
+  'value=57600
+  'value=115200
+  Const Port3_ScanRate = 5 'minute
+  'min=1
+  'max=720
+  'inc=1
+  Const Port3_SDI12_Addr = "2"
+  Const Port3_SDI12_Cmd = "M!"
+  Const Port3_SDI12_NumVal = 2
+  'min=1
+  'max=99
+  'inc=1
+  Const Port3_VoltSE_Multiplier = 1
+  Const Port3_VoltSE_Offset = 0
+  Const Port3_SampleMode = "POLLED"
+  'value ="POLLED"
+  'Value = "CONTINUOUS"
+  Const Port3_IntegratedWiper = "TRUE"
+  'value=TRUE
+  'value=FALSE
+  Const Port3_NumWipes = 1
+  'value = 2
+  'value = 3
+  Const Port4_Wiper = "ENABLE"
+  'value="DISABLE"
+  'value="ENABLE"
+  Const Port4_ScanRate = 5
+  'min=1
+  'max=1440
+  'inc=1
+  Const Port3_WarmUp = 30
+  'min=-1
+  'max=300
+  'inc=1
+  'Global constants for all SUNA's attached
+  '///////
+  Const Port3_MEASNUM = 30 'number of measurements to request
+  Const Port3_AVGNUM = 20 'number of those measurements to average
+  Const SUNA_OFFSET = 0 'TODO: I DON'T KNOW WHAT TO DO WITH/WHERE TO PUT
+  Const Port3_delay = 500 'msec
+  '//////
+  Const Port5_Mode = "DISABLE"
+  'value="DISABLE"
+  'value="CYCLEP"
+  'value="CYCLEN"
+  'value="RS232"
+  Const Port5_ScanRate = 120 'minute
+  'min=60
+  'max=720
+  'inc=1
+  Const Port5_WarmUp = -1
+  'min=-1
+  'max=300
+  'inc=1
+  Const Port5_BaudRate = 19200 'baud
+  'value=9600
+  'value=19200
+  'value=38400
+  'value=57600
+  'value=115200
+  Const Port5_Measnum = 30 'n samples
+  Const Port5_delay = 1000 'ms
+  Const Port6_Mode = "VOLTSE"
+  'value="DISABLE"
+  'value="VOLTSE"
+  Const Port6_ScanRate = 5 'minute
+  'min=1
+  'max=720
+  'inc=1
+  Const Port6_WarmUp = 10
+  'min=-1
+  'max=300
+  'inc=1
+  Const Port6_VoltSE_Multiplier = 1
+  Const Port6_VoltSE_Offset = 0
+  Const Port7_Mode = "DISABLE"
+  'value="DISABLE"
+  'value="SDI12"
+  'value="OBS501"
+  Const Port7_ScanRate = 15 'minute
+  'min=1
+  'max=720
+  'inc=1
+  Const Port7_WarmUp = -1
+  'min=-1
+  'max=300
+  'inc=1
+  Const Port7_SDI12_Addr = "1"
+  Const Port7_SDI12_Cmd = "M2!"
+  Const Port7_SDI12_NumVal = 9
+  'min=1
+  'max=99
+  'inc=1
+  Const Port8_Mode = "DISABLE"
+  'value="DISABLE"
+  'value="CYCLEP"
+  'value="CYCLEN"
+  'value="RS232"
+  Const Port8_ScanRate = 60 'minute
+  'min=60
+  'max=720
+  'inc=1
+  Const Port8_WarmUp = 0
+  'min=-1
+  'max=300
+  'inc=1
+  Const Port8_BaudRate = 19200 'baud
+  'value=9600
+  'value=19200
+  'value=38400
+  'value=57600
+  'value=115200
+  'DATA FLAGGING
+  Const NO3_FLAG = TRUE
+  Const NO3_CV_LOW = 0.1
+  Const NO3_CV_HIGH = 10
+  Const NO3_LOW_HARD = -0.28
+  Const NO3_LOW_SOFT = 0.014
+  Const NO3_HIGH_HARD = 3.5
+  Const NO3_HIGH_SOFT = 1.5
+  Const NO3_FIT_HIGH = 0.002
+  'DIAGNOSTICS
+  Const RAW_TABLE_OUTPUT = TRUE
+  'Default table output control
+
+  Const DEFAULT_TABLE_OUTPUT  = TRUE
+  Const DEFAULT_SCANRATE = 15 'minutes
+  'min=60
+  'max=720
+  'inc=1
+  
+  Const DEFAULT_PROC_TABLE_OUTPUT = TRUE
+  Const DEFAULT_RAW_TABLE_OUTPUT = TRUE
+EndConstTable
+'End of Constants Customization Section
+'DO NOT DELETE THE 'End of Constants' LINE ABOVE
+

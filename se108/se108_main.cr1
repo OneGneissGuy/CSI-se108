@@ -1,0 +1,1339 @@
+Include "CPU:se108_settings.cr1"
+'se108 with old style cycle PO4 code
+'runs when ConstTable ApplyAndRestart is triggered remotely
+ApplyAndRestartSequence
+Call WriteConfigToFile()
+SetSetting("Configuration.ApplyAndRestart",TRUE)
+EndApplyAndRestartSequence
+
+Sub WriteConfigToFile()
+  'TODO: Update  Port two,three configs
+
+  'TODO: Note that this function will have to be updated
+  'if the ConstTable() name is changed
+  'TODO: Follow up with CS engineering and ask why GetRecord()
+  'does not work on a ConstTable - maybe the input to GetRecord() needs to
+  'be a variable?
+  Dim Name As String * 64 = "CRD:SystemLog.csv"
+  Dim Handle As Long
+  Dim Output As String * 200
+
+  Handle = FileOpen (Name,"a+b",-1)
+
+  Output = Replace(Public.Timestamp(4,1)," ",",")
+  FileWrite (Handle,Output,0)
+
+  Output = "," & Configuration.Port2_Mode _
+  & "," & Configuration.Port2_ScanRate _
+  & "," & Configuration.Port2_WarmUp _
+  & "," & Configuration.Port2_SDI12_Addr _
+  & "," & Configuration.Port2_BaudRate
+  FileWrite (Handle,Output,0)
+
+  Output = "," & Configuration.Port3_Mode _
+  & "," & Configuration.Port3_IntegratedWiper _
+  & "," & Configuration.Port3_ScanRate _
+  & "," & Configuration.Port3_WarmUp _
+  & "," & Configuration.Port3_BaudRate _
+  & "," & Configuration.Port3_SDI12_Addr _
+  & "," & Configuration.Port3_SDI12_Cmd _
+  & "," & Configuration.Port3_SDI12_NumVal _
+  & "," & Configuration.Port3_VoltSE_Multiplier _
+  & "," & Configuration.Port3_VoltSE_Offset
+  FileWrite (Handle,Output,0)
+
+  Output = "," & Configuration.Port4_Wiper _
+  & "," & Configuration.Port4_ScanRate
+  FileWrite (Handle,Output,0)
+
+  Output = "," & Configuration.Port5_Mode _
+  & "," & Configuration.Port5_ScanRate _
+  & "," & Configuration.Port5_WarmUp _
+  & "," & Configuration.Port5_BaudRate
+  FileWrite (Handle,Output,0)
+
+  Output = "," & Configuration.Port6_Mode _
+  & "," & Configuration.Port6_ScanRate _
+  & "," & Configuration.Port6_WarmUp _
+  & "," & Configuration.Port6_VoltSE_Multiplier _
+  & "," & Configuration.Port6_VoltSE_Offset
+  FileWrite (Handle,Output,0)
+
+  Output = "," & Configuration.Port7_Mode _
+  & "," & Configuration.Port7_ScanRate _
+  & "," & Configuration.Port7_WarmUp _
+  & "," & Configuration.Port7_SDI12_Addr _
+  & "," & Configuration.Port7_SDI12_Cmd _
+  & "," & Configuration.Port7_SDI12_NumVal
+  FileWrite (Handle,Output,0)
+
+  Output = "," & Configuration.Port8_Mode _
+  & "," & Configuration.Port8_ScanRate _
+  & "," & Configuration.Port8_WarmUp _
+  & "," & Configuration.Port8_BaudRate
+  FileWrite (Handle,Output,0)
+
+  Output ="," & Configuration.DEFAULT_TABLE_OUTPUT _
+  & "," & Configuration.RAW_TABLE_OUTPUT _
+  & "," & Configuration.NO3_FLAG _
+  & "," & Configuration.NO3_CV_LOW _
+  & "," & Configuration.NO3_CV_HIGH _
+  & "," & Configuration.NO3_LOW_HARD _
+  & "," & Configuration.NO3_LOW_SOFT _
+  & "," & Configuration.NO3_HIGH_HARD _
+  & "," & Configuration.NO3_HIGH_SOFT _
+  & "," & Configuration.NO3_FIT_HIGH
+  FileWrite (Handle,Output,0)
+
+  FileWrite(Handle,CHR(13)&CHR(10),0)
+  FileClose (Handle)
+
+EndSub
+
+Sub EXO2_SDI12(Dest(17))
+  'this routine uses the C! command
+  'to retrieve measurements from the EXO2
+  'using SDI-12
+  'C! command is needed to retrieve more than 9
+  'values from the sensor
+  'the routine will (actually/physically) issue
+  'the C! command. sdi12recorder() will return
+  '1e9 or NAN to the first element depending
+  'on the current state of things:
+  ' * 1e9, until ttt (measurement time) has finished
+  ' * NAN, if failure in communication
+
+  Const EXO2_SDI12_PORT = 7
+  Dim Cmd As String
+  Public Port2_EXO2_error As String * 30
+  Cmd = "C!"
+  Dest() = NAN
+  Dest(1) = 2e9
+  Do
+    SDI12Recorder (Dest(1),7,Port2_SDI12_Addr,Cmd,1.0,0)
+    If dest(1) = NAN
+      Port2_EXO2_error = "No Sonde Detected"
+    Else
+      Port2_EXO2_error = "No Sonde Error"
+    EndIf
+    If Dest(1) >= 1e9 Then
+      Cmd = "C"
+    Else
+      ExitDo
+    EndIf
+  Loop
+
+EndSub
+
+Sub EXO2_SERIAL(Dest(17),ComPort,DiagFileName As String * 64)
+
+  'this routine uses the RS485 interface DCP-SOA
+  'to retrieve "RUN" data from the EXO2
+  'TODO: Add sub description
+  'TODO: do something with the "burst" data (30 samples), currently only returning the last set of data
+  'TODO: Test multiple wipes
+  'TODO: Read in "No Sonde!" error message that SOA throws when no sonde is detected/connected
+  Dim EXOIn As String * 300
+  Public Port2_WiperDelay As String *100
+  Public Port2_WiperDelay_Result(1)
+  Dim EXOParse(17)
+  Dim j
+  Dim FileHandle As Long
+  'wake up the sensor and wait for the # prompt
+
+  SerialOut(ComPort,CHR(13) & CHR(10),"#",5,100)'CRLF until #
+
+  'then issue the "twipeb" command Port2_NumWipes times
+  Public result
+  For j= 1 To Port2_NumWipes
+    result = SerialOut(ComPort,"twipeb" & CHR(13),"twipeb",1,100)'wipe
+
+    '    If result<>0
+    SerialIn (Port2_WiperDelay,ComPort,100,0,100)'pull in wiper delay
+    Delay(1,45,sec)'wait wiper delay
+    '      'format
+    '      '      Replace (Port2_WiperDelay,CHR(13),"")'Replace isnt working as intended
+    '      '      Replace (Port2_WiperDelay,CHR(10),"")
+    '      '      Replace (Port2_WiperDelay,"#","$")
+    '
+    '      SplitStr (Port2_WiperDelay_Result,Port2_WiperDelay,CHR(11),1,0)'convert to number
+    '      'TODO: Read in No Sonde! ERROR
+    '      '        If StrComp ("
+    '      'No Sonde!
+    '      '# ",Port2_WiperDelay) <> 0 'TRUE
+    '      '
+    '      '?Command
+    '      '#
+    '      If Port2_WiperDelay_Result="NAN" 'then its not a number so its likely text ("No Sonde!")
+    '        If StrComp(Port2_WiperDelay,"?Command!") <> 0
+    '          Port2_EXO2_error = "Command Error"
+    '        EndIf
+    '        If StrComp(Port2_WiperDelay,"No Sonde!") <> 0
+    '          Port2_EXO2_error = "No Sonde Detected"
+    '          ExitFor
+    '          'E4xitSub'no sonde so abort
+    '        EndIf
+    '      Else
+    '        Port2_EXO2_error = "No Error"
+    '        Delay(1,Port2_WiperDelay_Result,sec)'wait wiper delay
+    '      EndIf
+    '    EndIf
+  Next j
+
+  SerialOut(ComPort,"run" & CHR(13),"run",3,100)'run
+
+  'get multiple samples / "burst" data
+  For j = 1 To Port2_MEASNUM + 2
+    'SerialInRecord (ComPort,EXOIn,&h0a,0,&h230d,NBytesReturned,11)
+    SerialIn (EXOIn,ComPort,200,&h23,300)'grab data string
+    If Len(EXOIn) > 20 Then
+      Replace (EXOIn,CHR(13),"")
+      Replace (EXOIn,CHR(10),"")
+      Replace (EXOIn,"#","")
+      If j>1'skip the first bad formated record
+        SplitStr (EXOParse(),EXOIn,"",17,0)'parse first data line
+        Port2_EXO2_error = "No Error"
+        If DiagFileName <> "" Then
+          FileHandle = FileOpen (DiagFileName,"a+b",-1)
+          FileWrite (FileHandle,Public.Timestamp(4,1) & "" & EXOIn & CHR(13) & CHR(10),0)
+          FileClose (FileHandle)
+        EndIf
+      EndIf
+    Else
+      Port2_EXO2_error = "Sonde Communication Error"
+      EXOIn = NAN
+    EndIf
+  Next j
+
+  'stop the output, sending a zero or ESC will stop it
+  SerialOut(ComPort,"0" + CHR(13),"#",3,100)'stop sampling
+
+  'pass the data back out of the sub
+  Dest() = EXOParse()
+
+EndSub
+
+Sub SUNA(dest(17),Quality As Long, ComPort,SunaVersion As Long,DiagFileName As String * 64)
+
+  'This sub has the following dependencies
+  ' Process: Execute SerialOpen() for specified ComPort before calling
+  ' Process: Sensor must be powered up long enough before calling
+  ' Constants: Port3_Measnum, Port3_avgnum, NO3_CV_LOW, NO3_CV_HIGH,
+  '     NO3_LOW_HARD, NO3_LOW_SOFT, NO3_HIGH_HARD, NO3_HIGH_SOFT, NO3_FIT_HIGH
+
+  'TODO: Add sub description
+
+  'used to control max array size
+  Const SUNAMaxFrameLen = 282
+
+  Dim SunaInString As String * 2000
+  Dim NBytesReturned As Long
+  Dim SunaInVals(SUNAMaxFrameLen)
+
+  'TODO: Note, can save on memory by removing this if not actually needed
+  Dim SunaVector(Port3_Measnum,SUNAMaxFrameLen)
+
+  Dim NO3_SampleTime(Port3_Measnum)
+  Dim NO3_dark(Port3_Measnum)
+  Dim NO3_SN, NO3(Port3_Measnum), no3_a254(Port3_Measnum)
+  Dim no3_a350(Port3_Measnum), NO3_light(Port3_Measnum),Spec_Temp(Port3_Measnum)
+  Dim Lamp_temp(Port3_Measnum), Lamp_Time(Port3_Measnum), RH(Port3_Measnum)
+  Dim InputVDC(Port3_Measnum), LampVDC(Port3_Measnum), NO3_fit(Port3_Measnum)
+  Dim NO3_ave, NO3_fit_ave, NO3_stdev, NO3_fit_stdev, NO3_med, NO3_fit_med, NO3_CV
+  Dim NO3_mean2med
+  Dim NO3_sort(Port3_avgnum),NO3_fit_sort(Port3_avgnum)
+  Dim t,j,z
+  Dim FileHandle As Long
+  Dim wipe_delay As String * 10
+  Dim wipe_delay_value
+  Dim StartCmd As String * 12
+  Dim StopCmd As String * 4
+  Dim CmdChar As String * 3
+  Dim FrameLen As Long
+
+  'SUNA version 1 and SUNA version 2 have different
+  'start commands and different "frame lengths"
+  Select Case SunaVersion
+  Case 1
+    StartCmd = "MEASURE " & Port3_Measnum
+    'StartCmd = "STRT"
+    FrameLen = 241
+    StopCmd = "STOP"
+    CmdChar = "$"
+  Case 2
+    StartCmd = "MEASURE " & Port3_Measnum
+    'StartCmd = "START"
+    FrameLen = 282
+    StopCmd = "STOP"
+    CmdChar = "$"
+  EndSelect
+  Dim i
+  'issue EXIT and then STOP to make sure we are in a known state
+  'i.e., out of SUNA> and ideally back at CMD?
+  'then delay and flush out anything in the buffer
+  If UpperCase(Port3_SampleMode) = "POLLED"
+    SerialOut(ComPort,"EXIT" & CHR(13) & CHR(10),"",1,1)
+    SerialOut(ComPort,"STOP" & CHR(13) & CHR(10),"",1,1)
+    Delay (1,1,Sec)
+    SerialFlush (ComPort)
+    '    'hit the serial port with $'s until we   get to the command mode SUNA> prompt
+    '    'then initiate the wipe command, special swipewiper, Port3_NumWipes times if more than default value (default 1)
+    SerialOut (ComPort,"$" & CHR(13) + CHR(10),"SUNA>",0,0)
+
+    'TODO: Fix the multiple wipe for integrated suna v2 (ONLY WIPES ONCE)
+
+    If Port3_IntegratedWiper <> 0
+      If Port3_NumWipes > 1
+        For i = 2 To Port3_NumWipes
+          SerialOut (ComPort,"Special Swipewiper" & CHR(13) + CHR(10),"$Ok",0,0) '$Ok
+          SerialIn(wipe_delay,ComPort,100,0,10)
+          SplitStr(wipe_delay_value,wipe_delay,"",1,0)
+          Delay(1,wipe_delay_value, sec)' suna says 15 seconds
+          ' SerialOut (ComPort,"$" & CHR(13) + CHR(10),"SUNA>",0,0)
+        Next i
+      EndIf
+    EndIf
+    'EndIf
+    'issue EXIT and then STOP to make sure we are in a known state
+    'i.e., out of SUNA> and ideally back at CMD?
+    'then delay and flush out anything in the buffer
+    'If UpperCase(Port3_SampleMode) = "POLLED"
+
+    SerialOut(ComPort,"EXIT" & CHR(13) & CHR(10),"",1,1)
+    SerialOut(ComPort,"STOP" & CHR(13) & CHR(10),"",1,1)
+    Delay (1,1,Sec)
+    SerialFlush (ComPort)
+
+    'CR and LF until the sensor is awake and/or
+    'we are at the CMD? prompt
+    'then ask for "X" num measurements
+    SerialOut (ComPort, CHR(13) + CHR(10),"CMD?",3,500)
+
+    SerialOut(ComPort,StartCmd & CHR(13) & CHR(10),"",1,1)
+  EndIf
+  'intialize data vectors as NAN's to start
+  SunaInVals() = NAN
+  SunaVector() = NAN
+  '... and all the others
+  'wait for all the data to come in
+  z = 1
+  For t = 1 To (300 + (Port3_Measnum * 3))
+
+    'every delay milliseconds, look for a string
+    'that starts with "SA" and ends with CRLF
+    Delay (1,Port3_delay,mSec)
+    SerialInRecord (ComPort,SunaInString,&h5341,0,&H0D0A,NBytesReturned,11)
+
+    'if we found something of interest, tack the "SA"
+    'back on to the front and process
+    If NBytesReturned <> 0 Then
+      SunaInString = "SA" & SunaInString
+
+      'if a file name has been provided, write the "SA"..<CR>
+      'data captured to a text file
+      'this is less efficient than parsing out the numbers and saving them to a datatable
+      'but is more efficient than saving the string input to a datatable
+      If DiagFileName <> "" Then
+        FileHandle = FileOpen (DiagFileName,"a+b",-1)
+        FileWrite (FileHandle,Replace (Public.Timestamp(4,1)," ",",") & "," & SunaInString & CHR(13) & CHR(10),0)
+        FileClose (FileHandle)
+      EndIf
+
+      'take action on light or dark frames (LF/DF)
+      Select Case Left(SunaInString,6)
+      Case "SATSLF"
+        'light data, parse it
+        SplitStr (SunaInVals,SunaInString,",",FrameLen,0)
+
+        If SunaVersion = 1 Then
+          dest(17)= SunaInVals(1)'this is the serial number
+          'dest() = SunaInVals(2)
+          NO3(z) = SunaInVals(4)
+          NO3_fit(z) = SunaInVals(5)
+          dest(12) = SunaInVals(6)
+          dest(11)= SunaInVals(7)
+          Dest(13) = SunaInVals(8)
+          dest(14)= SunaInVals(9)
+          dest(10) = SunaInVals(13)
+          dest(9) = SunaInVals(14)
+          dest(16) = SunaInVals(10)
+          dest(15) = SunaInVals(12)
+          dest(7)  = SunaInVals(90)'RAW A/D detector counts for 254 nm
+          dest(8)  = SunaInVals(209)'RAW A/D detector counts for 350 nm
+
+        ElseIf SunaVersion = 2 Then
+          'TODO: THERE ARE NOT 17 VALUES HERE - WHAT TO DO?
+
+          dest(17) = SunaInVals(1)'this is the no3 sensors serial number
+          NO3(z) = SunaInVals(5) 'mg/L No3-N
+          dest(7)  = SunaInVals(6)   'absorbance at 254 nm
+          dest(8)  = SunaInVals(7) 'absorbance at 350 nm
+          dest(9) = SunaInVals(10) 'dark used
+          dest(10) = SunaInVals(9) 'light ave
+          dest(11) = SunaInVals(269)
+          dest(12) = SunaInVals(270)
+          dest(13) = SunaInVals(271)
+          dest(14)= SunaInVals(272)
+          dest(15) = SunaInVals(273)
+          dest(16) = SunaInVals(274)
+          NO3_fit(z) = SunaInVals(281)
+        EndIf
+        'move the split data array into the vector
+        Move (SunaVector(z,1),FrameLen,SunaInVals(1),FrameLen)
+
+        'increment pointer to next message
+        z = z+1
+        If z > Port3_Measnum Then ExitFor
+
+      Case "SATSDF"
+        'do nothing with the dark data
+      EndSelect
+
+    EndIf
+  Next t
+
+  SerialOut (ComPort,StopCmd + CHR(13) + CHR(10),"",1,100)'stop sensor
+
+  'Alternatively, I guess we conditionally call the processing (AvgSpa, etc.) based on the variable "z".
+
+  If z < Port3_Measnum Then
+    'set quality flag to register all data is bad
+    Quality=255
+    dest() = NAN 'set output date to NANS
+  Else
+    'do processing and output
+
+    'Calculate stats
+    AvgSpa (NO3_ave,Port3_avgnum,NO3(Port3_Measnum-Port3_avgnum))
+    AvgSpa (NO3_fit_ave,Port3_avgnum,NO3_fit(Port3_Measnum-Port3_avgnum))
+    StdDevSpa (NO3_stdev,Port3_avgnum,NO3(Port3_Measnum-Port3_avgnum))
+    StdDevSpa (NO3_fit_stdev,Port3_avgnum,NO3_fit(Port3_Measnum-Port3_avgnum))
+    SortSpa(NO3_sort(),Port3_avgnum,NO3(Port3_Measnum-Port3_avgnum))
+    SortSpa(NO3_fit_sort(),Port3_avgnum,NO3_fit(Port3_Measnum-Port3_avgnum))
+
+    'get median - average middle 2 numbers if swath is even, use middle number if swath is odd
+    If Port3_avgnum MOD 2 = 0 Then
+      'avgnum is even
+      'average the middle two numbers of the swath
+      NO3_med = (NO3_sort(Port3_avgnum/2) + NO3_sort((Port3_avgnum/2)+1)) / 2
+      NO3_fit_med = (NO3_sort(Port3_avgnum/2) + NO3_sort((Port3_avgnum/2)+1)) / 2
+    Else
+      'avgnum is odd
+      'just take the middle number
+      NO3_med = NO3_sort(Ceiling(Port3_avgnum/2))
+      NO3_fit_med = NO3_sort(Ceiling(Port3_avgnum/2))
+    EndIf
+    NO3_CV=NO3_stdev/NO3_ave*100
+    NO3_mean2med=NO3_ave/NO3_med
+
+    'Calculate a measurement quality number
+    'Each bit in the number has a different meaning
+    'See the following chart:
+    'bit, integer, flag
+    '00, 01, <low_soft
+    '01, 02, >high_soft
+    '02, 04, <low_hard
+    '03, 08, >high_hard
+    '04, 16, <cv_low
+    '05, 32, >cv_high
+    '06, 64, med = 0
+    Quality = 0
+    If (NO3_ave - SUNA_OFFSET)<NO3_LOW_SOFT Then Quality += 1
+    If (NO3_ave - SUNA_OFFSET)>NO3_HIGH_SOFT Then Quality += 2
+    If (NO3_ave - SUNA_OFFSET)<NO3_LOW_HARD Then Quality += 4
+    If (NO3_ave - SUNA_OFFSET)>NO3_HIGH_HARD Then Quality +=8
+    If NO3_CV<NO3_CV_LOW Then Quality += 16
+    If NO3_CV>NO3_CV_HIGH Then Quality += 32
+    If NO3_fit_med>NO3_FIT_HIGH Then Quality += 64
+    If NO3_med=0 Then Quality += 128
+
+    dest(1) = NO3_ave
+    dest(2) = NO3_stdev
+    dest(3) = NO3_med
+    dest(4) = NO3_fit_ave
+    dest(5) = NO3_fit_stdev
+    dest(6) = NO3_fit_med
+    'dest(7) = no3_a254
+    'dest(8) = no3_a350
+    'dest(9) = NO3_dark
+    'dest(10) = NO3_light
+    'dest(11) = Spec_Temp
+    'dest(12) = Lamp_temp
+    'dest(13) = Lamp_Time
+    'dest(14) = RH
+    'dest(15) = InputVDC
+    'dest(16) = LampVDC
+    'dest(17) = NO3_SN
+    'accumulate data and pass through sub as dest
+    '    dest(1) = NO3_ave
+    '    dest(2) = NO3_stdev
+    '    dest(3) = NO3_med
+    '    dest(4) = NO3_fit_ave
+    '    dest(5) = NO3_fit_stdev
+    '    dest(6) = NO3_fit_med
+    '    dest(7) = no3_a254
+    '    dest(8) = no3_a350
+    '    dest(9) = NO3_dark
+    '    dest(10) = NO3_light
+    '    dest(11) = Spec_Temp
+    '    dest(12) = Lamp_temp
+    '    dest(13) = Lamp_Time
+    '    dest(14) = RH
+    '    dest(15) = InputVDC
+    '    dest(16) = LampVDC
+    '    dest(17) = NO3_SN
+  EndIf
+EndSub
+Sub Port3RS232(ComPort,DiagFileName)
+  ' This subroutine writes data from a generic RS-232 data to a text file
+
+  Dim t,z,FileHandle As Long, NBytesReturned
+  Dim Port3InString As String *1000
+  t=0
+  z=0
+  For t = 1 To (300 + (Port3_Measnum * 3))
+
+    'every delay milliseconds, look for a string
+    'that starts with "SA" and ends with CRLF
+    If Port3_delay>0 Then Delay (1,Port3_delay,mSec)
+    If Port3_delay<0 Then Delay ( 1,1000,mSec) 'default to 1 hertz
+    SerialInRecord (ComPort,Port3InString,&H0D0A,0,&H0D0A,NBytesReturned,11)
+
+    If NBytesReturned <> 0 Then
+
+      If DiagFileName <> "" Then
+        FileHandle = FileOpen (DiagFileName,"a+b",-1)
+        FileWrite (FileHandle,Replace (Public.Timestamp(4,1)," ",",") & "," & Port3InString & CHR(13) & CHR(10),0)
+        FileClose (FileHandle)
+      EndIf
+
+      z = z+1
+      If z > Port3_Measnum Then ExitFor
+    EndIf
+  Next t
+
+EndSub
+
+Sub Port5RS232(dest(12),ComPort,DiagFileName)
+  ' This subroutine writes data from a generic RS-232 data to a text file
+  'TODO: Test this!
+  Dim Port5InString As String *2000
+  Dim Port5Out(12),NBytesReturned
+  Dim t,z,FileHandle As Long
+  t=0
+  z=0
+  For t = 1 To Port5_Measnum
+
+    'every delay milliseconds, look for a string
+
+    '    If Port5_delay>0 Then Delay (1,Port5_delay,mSec)
+    '    If Port5_delay<0 Then Delay ( 1,1000,mSec) 'default to 1 hertz
+    Delay ( 1,1000,mSec) 'default to 1 hertz
+    SerialInRecord (ComPort,Port5InString,&H0D0A,0,&H0D0A,NBytesReturned,11)'
+    '  SerialIn(Port5InString,ComPort,100,0,1000)'this returns values but still wont write to file, even if nbytesreturned if stmt is bypassed
+    SplitStr (Port5Out,Port5InString,CHR(9),12,5)'split on tab- for triplet
+    'dest()=Port5OutString
+    If NBytesReturned <> 0 Then
+      If DiagFileName <> "" Then
+        FileHandle = FileOpen (DiagFileName,"a+b",-1)
+
+        FileWrite (FileHandle,Replace (Public.Timestamp(4,1)," ",",") & "," & Port5Out & CHR(13) & CHR(10),0)'
+        FileClose (FileHandle)
+      EndIf
+      '    z = z+1
+      '    If z > Port5_Measnum Then ExitFor
+    EndIf
+  Next t
+  SerialFlush(ComPort)
+EndSub
+
+Sub Cycle(dest(17),ComPort,CycleType)
+  'TO do: Nothing-works fine!
+  'Cycle Variables
+  Dim test
+  Dim test1,test2,test3,test4
+  Dim CycInString(17)
+  Dim CycleInString As String * 100
+  'Sub WakeCycle
+  Dim j
+  test1=0
+
+  Dim kk
+  test1=0
+  For kk=1 To 3
+    SerialOutBlock (ComPort,CHR(32) + CHR(13),2)
+    SerialFlush(ComPort)
+    Delay(0,1000,mSec)'Wait
+  Next kk
+
+  'retrieve last data frame from cycle buffer
+
+  SerialOutBlock (ComPort,"$GLSO" + CHR(13),6)'Issue data return command
+  SerialIn (CycleInString,comsdc7,10,&H0D,100)'$GLSO command echo
+  SerialIn (CycleInString,comsdc7,10,&H0D,100)'$Data
+  CycInString()=NAN'init as nans
+  Delay(1,3,Sec)
+
+  SplitStr (CycInString(),CycleInString,CHR(09),17,0)'parse data from  CycleInString to CycInString as tab sv, parse numbers and ignore text
+
+  'assign output matrix- See user manual for frame definitions
+  dest(1) = CycInString(1)
+  dest(2)= CycInString(2)
+  dest(3)= CycInString(3)
+  dest(4) = CycInString(4)
+  dest(5) = CycInString(5)
+  dest(6) = CycInString(6)
+  dest(7) = CycInString(7)
+  dest(8) = CycInString(8)
+  dest(9) = CycInString(9)
+  dest(10) = CycInString(10)
+  dest(11) = CycInString(11)
+  dest(12) = CycInString(12)
+  dest(13) = CycInString(13)
+  dest(14) = CycInString(14)
+  dest(15) = CycInString(15)
+  dest(16) = CycInString(16)
+  dest(17) = CycInString(17)
+
+  'Put er to sleep
+  SerialFlush(ComPort)
+  SerialOutBlock (ComPort,"$SLP" + CHR(13),5)'Issue sleep command
+  SerialFlush(ComPort)
+
+EndSub
+
+Sub OBS501(Dest(Port7_SDI12_NumVal))
+
+  SDI12Recorder (Dest(Port7_SDI12_NumVal),Port7_SDIPort,Port7_SDI12_Addr,Port7_SDI12_Cmd,1.0,0)
+  If Dest(1) = NAN Then
+    Move (Dest(1),Port7_SDI12_NumVal,NAN,1)
+  EndIf
+
+EndSub
+
+Dim ReserveEXO10
+Dim ReserveSUNA5
+Dim ReserveOTHER(9)
+Dim ReserveOTHER1
+Dim ReserveOTHER2
+Dim ReserveOTHER3
+Dim ReserveOTHER4
+Dim ReserveOTHER5
+Dim ReserveOTHER6
+Dim ReserveOTHER7
+Dim ReserveOTHER8
+Dim ReserveOTHER9
+Dim ReserveOTHER10
+Dim ReserveSYSDIAG3
+Dim ReserveSYSDIAG4
+Dim ReserveSYSDIAG5
+Dim ReserveEXODIAG1
+Dim ReserveEXODIAG2
+Dim ReserveEXODIAG3
+Dim ReserveEXODIAG4
+Dim ReserveEXODIAG5
+Public SUNA_CV
+Dim ReserveSUNADIAG4
+Dim ReserveSUNADIAG5
+Dim ReserveOTHERDIAG1
+Dim ReserveOTHERDIAG2
+Dim ReserveOTHERDIAG3
+Dim ReserveOTHERDIAG4
+Dim ReserveOTHERDIAG5
+Public DCP_VDC
+Public DataloggerTemperature
+Public Pause As Boolean
+Public PausedFor As Long
+Public ForceRead(8) As Boolean
+Public ForcePowerOn(8) As Boolean
+Dim ForcePowerOnLast(8) As Boolean
+Public ForcePowerOnFor(8) As Long
+
+Public CellOn As Boolean
+Dim CellHrs(24) As Long
+
+Public CD8S(16) As Boolean
+Public ReadPort(8) As Boolean
+Dim writeDefaultTable As Boolean
+Dim i 'used in main scan
+Dim ii 'used in slowsequence#
+'Public Port2_EXO2_error As String *30
+'=====================================================
+'DEFAULT TABLE(S)
+'=====================================================
+'#If DEFAULT_TABLE_OUTPUT <> FALSE
+DataTable (RawData,true,1000)'sample when the last sensor samples ;
+  'Fix table writing frequency
+  'start default table
+  'DCP
+  Sample (1,DCP_VDC,FP2)
+  Sample (1,DataloggerTemperature,FP2)
+  'YSI EXO
+  'Sample (1,Date_EXO,IEEE4)
+  'Sample (1,Time_EXO,IEEE4)
+  Sample (1,Temperature,IEEE4)
+  Sample (1,SpCond,IEEE4)
+  Sample (1,pH,IEEE4)
+  Sample (1,FDOM,IEEE4)
+  Sample (1,Turbidity,IEEE4)
+  Sample (1,FCHLa,IEEE4)
+  Sample (1,FPHYCOC,IEEE4)
+  Sample (1,DOmgL,IEEE4)
+  Sample (1,DOsat,IEEE4)
+
+  'SUNA
+  Sample (1,NO3_ave,FP2)
+  Sample (1,NO3_stdev,FP2)
+  Sample (1,NO3_med,FP2)
+  Sample (1,NO3_fit_ave,IEEE4)
+  Sample (1,NO3_fit_stdev,IEEE4)
+  Sample (1,NO3_fit_med,IEEE4)
+  Sample (1,no3_a254,IEEE4)
+  Sample (1,no3_a350,IEEE4)
+  Sample (1,NO3_dark,IEEE4)
+  Sample (1,NO3_light,IEEE4)
+  Sample (1,Spec_Temp,IEEE4)
+  Sample (1,Lamp_temp,IEEE4)
+  Sample (1,RH,IEEE4)
+  Sample (1,Lamp_Time ,IEEE4)
+  Sample (1,InputVDC,IEEE4)
+  Sample (1,LampVDC,IEEE4)
+  'Flags
+  'Sample(1,NO3_flag,Boolean)
+  'Sample(1,NO3_softFlag,Boolean)
+  Sample(1,NO3_SN,FP2)
+
+EndTable
+'TODO: Fix table writing frequency
+'TODO: Add OBS data
+DataTable (ProcData,true,-1)'sample when the last sensor samples ; here its p[ort 7 the SDI12 sensor
+
+  'start default table
+  'DCP
+  Sample (1,DCP_VDC,FP2)
+  Sample (1,DataloggerTemperature,FP2)
+  'YSI EXO
+  'Sample (1,Date_EXO,IEEE4)
+  'Sample (1,Time_EXO,IEEE4)
+  Sample (1,Temperature,IEEE4)
+  Sample (1,SpCond,IEEE4)
+  Sample (1,pH,IEEE4)
+  Sample (1,FDOM,IEEE4)
+  Sample (1,Turbidity,IEEE4)
+  Sample (1,FCHLa,IEEE4)
+  Sample (1,FPHYCOC,IEEE4)
+  Sample (1,DOmgL,IEEE4)
+  Sample (1,DOsat,IEEE4)
+  'Sample (1,Depth,IEEE4)
+  'Sample (1,Cable_VDC,IEEE4)
+  'Sample (1,Batt_VDC,IEEE4)
+  'Sample (1,FDOMRaw,IEEE4)
+  ' Sample (1,FCHLARaw,IEEE4)
+  ' Sample (1,FPHYCOCRaw,IEEE4)
+  'SUNA
+  Sample (1,NO3_ave,FP2) 'These were micromolar concentrations, but now used as spacers (but are the raw mg/L values)
+  Sample (1,NO3_stdev,FP2)'These were micromolar concentrations, but now used as spacers(but are the raw mg/L values)
+  Sample (1,NO3_med,FP2)  'These were micromolar concentrations, but now used as spacers(but are the raw mg/L values)
+  ' Sample (1,NO3_ave_pass,FP2)
+  'Sample (1,NO3_med_pass,FP2)
+  Sample (1,NO3_fit_ave,IEEE4)
+  Sample (1,NO3_fit_stdev,IEEE4)
+  Sample (1,NO3_fit_med,IEEE4)
+  Sample (1,no3_a254,IEEE4)
+  Sample (1,no3_a350,IEEE4)
+  Sample (1,NO3_dark,IEEE4)
+  Sample (1,NO3_light,IEEE4)
+  Sample (1,Spec_Temp,IEEE4)
+  Sample (1,Lamp_temp,IEEE4)
+  Sample (1,RH,IEEE4)
+  Sample (1,Lamp_Time ,IEEE4)
+  Sample (1,InputVDC,IEEE4)
+  Sample (1,LampVDC,IEEE4)
+
+  'Flags
+  'Sample(1,NO3_flag,Boolean)
+  'Sample(1,NO3_softFlag,Boolean)
+  Sample(1,NO3_SN,FP2)
+
+  'Sample (Port7_SDI12_NumVal,Port7_SDI12_data,IEEE4)
+EndTable
+
+'#EndIf
+
+'=====================================================
+'PORT 2 DECLARATIONS, SUBS, TABLES
+'=====================================================
+
+#If UpperCase(Port2_Mode) = "EXO2_SDI12" OR UpperCase(Port2_Mode) = "EXO2_SERIAL"
+Public Port2_EXO2_Data(17)
+Alias Port2_EXO2_Data(1) = Date_EXO
+Alias Port2_EXO2_Data(2) = Time_EXO
+Alias Port2_EXO2_Data(3) = Temperature
+Alias Port2_EXO2_Data(4) = SpCond
+Alias Port2_EXO2_Data(5) = pH
+Alias Port2_EXO2_Data(6) = FDOM
+Alias Port2_EXO2_Data(7) = Turbidity
+Alias Port2_EXO2_Data(8) = FCHLa
+Alias Port2_EXO2_Data(9) = FPHYCOC
+Alias Port2_EXO2_Data(10) = DOsat
+Alias Port2_EXO2_Data(11) = DOmgL
+Alias Port2_EXO2_Data(12) = Depth
+Alias Port2_EXO2_Data(13) = Cable_VDC
+Alias Port2_EXO2_Data(14) = Batt_VDC
+Alias Port2_EXO2_Data(15) = FDOMRaw
+Alias Port2_EXO2_Data(16) = FCHLARaw
+Alias Port2_EXO2_Data(17) = FPHYCOCRaw
+'Units FDOM = QSE
+'Units Depth = feet
+'Units Cable_VDC = Volts
+'Units Batt_VDC = Volts
+'Units SpCond = uS/cm
+'Units Temperature = Deg C
+'Units Batt_VDC = Volts
+'Units FPHYCOC,FCHLa = RFU'
+'Units Turbidity = FNU
+'Units DOmgL = mg/L
+'Units DOsat = %sat
+'Units FDOMRaw = raw '??
+'Units FCHLARaw = raw
+'Units FPHYCOCRaw = raw
+DataTable (Port2_EXO2,ReadPort(2),1000)'only write when data is fresh and synchronous with schedule sample interval
+  'DataTable (Port2_EXO2,True,1000)
+  Sample (17,Port2_EXO2_Data,IEEE4)
+  Sample(1,Port2_EXO2_error,String)
+EndTable
+'TO DO: Add force read code for tracking in CHIMPS/ADAPS
+DataTable (Port2_EXO2_Force,ForceRead(2),1000)'write only when the sneor is forced into sampleing- asynchronous
+  Sample (17,Port2_EXO2_Data,IEEE4)
+  Sample(1,Port2_EXO2_error,String)
+EndTable
+#EndIf 'Port2_Mode
+
+'=====================================================
+'PORT 3 DECLARATIONS, SUBS, TABLES
+'=====================================================
+#If UpperCase(Port3_Mode) = "SUNAV2" OR UpperCase(Port3_Mode) = "SUNAV1"
+Public Port3_SUNA_data(17)
+Alias Port3_SUNA_data(1) =  NO3_ave
+Alias Port3_SUNA_data(2) = NO3_stdev
+Alias Port3_SUNA_data(3) = NO3_med
+Alias Port3_SUNA_data(4) = NO3_fit_ave
+Alias Port3_SUNA_data(5) = NO3_fit_stdev
+Alias Port3_SUNA_data(6) = NO3_fit_med
+Alias Port3_SUNA_data(7) = no3_a254
+Alias Port3_SUNA_data(8) = no3_a350
+Alias Port3_SUNA_data(9) = NO3_dark
+Alias Port3_SUNA_data(10) = NO3_light
+Alias Port3_SUNA_data(11) = Spec_Temp
+Alias Port3_SUNA_data(12) = Lamp_temp
+Alias Port3_SUNA_data(13) = Lamp_Time
+Alias Port3_SUNA_data(14) = RH
+Alias Port3_SUNA_data(15) = LampVDC
+Alias Port3_SUNA_data(16) = InputVDC
+Alias Port3_SUNA_data(17) = NO3_SN
+
+Public Port3_SUNA_Quality As Long
+
+DataTable (Port3_SUNA,ReadPort(3),1000)
+  'DataTable (Port3_SUNA,True,1000)
+  Sample(1,Port3_SUNA_Quality,Long)
+  Sample (17,Port3_SUNA_data,IEEE4)
+EndTable
+
+DataTable (Port3_SUNA_RAW,ReadPort(3),1000)
+  Sample(1,Port3_SUNA_Quality,Long)
+  Sample (17,Port3_SUNA_data,IEEE4)
+EndTable
+
+DataTable (Port3_SUNA_Force,ForceRead(3),1000)
+  Sample(1,Port3_SUNA_Quality,Long)
+  Sample (17,Port3_SUNA_data,IEEE4)
+EndTable
+
+#ElseIf UpperCase(Port3_Mode) = "SDI12"
+Public Port3_SDI12_data(Port3_SDI12_NumVal)
+DataTable (Port3_SDI12,True,1000)
+  Sample (Port3_SDI12_NumVal,Port3_SDI12_data,IEEE4)
+EndTable
+
+#ElseIf UpperCase(Port3_Mode) = "VOLTSE"
+Dim Port3_mV, Port3_Scaled
+DataTable (Port3_VOLTSE,True,1000)
+  Sample (1,Port3_mV,IEEE4)
+  Sample (1,Port3_Scaled,IEEE4)
+EndTable
+
+#EndIf 'Port3_Mode
+
+'=====================================================
+'PORT 5 DECLARATIONS, SUBS, TABLES
+'=====================================================
+#If UpperCase(Port5_Mode) = "CYCLEP"
+Public Port5_CycleP_data(17)
+DataTable (Port5_CycleP,True,1000)
+  Sample (17,Port5_CycleP_data,IEEE4)
+EndTable
+
+#ElseIf UpperCase(Port5_Mode) = "CYCLEN"
+Public Port5_CycleN_data(17)
+DataTable (Port5_CycleN,True,1000)
+  Sample (17,Port5_CycleN_data,IEEE4)
+EndTable
+#Else
+Dim Port5data(17)
+#EndIf 'Port5_Mode
+
+'=====================================================
+'PORT 6 DECLARATIONS, SUBS, TABLES
+'=====================================================
+#If UpperCase(Port6_Mode) = "VOLTSE" Then
+Dim Port6_mV, Port6_Scaled
+DataTable (Port6_VOLTSE,True,1000)
+  Sample (1,Port6_mV,IEEE4)
+  Sample (1,Port6_Scaled,IEEE4)
+EndTable
+
+#EndIf 'Port6_Mode
+
+'=====================================================
+'PORT 7 DECLARATIONS, SUBS, TABLES
+'=====================================================
+#If UpperCase(Port7_Mode) = "SDI12" OR UpperCase(Port7_Mode) = "OBS501"  Then
+Public Port7_SDI12_data(Port7_SDI12_NumVal)
+
+'Alias ReserveOTHER1=Port7_SDI12_data(1)
+'Alias ReserveOTHER2=Port7_SDI12_data(2)
+'Alias ReserveOTHER3=Port7_SDI12_data(3)
+'Alias ReserveOTHER4=Port7_SDI12_data(4)
+'Alias ReserveOTHER5=Port7_SDI12_data(5)
+'Alias ReserveOTHER6=Port7_SDI12_data(6)
+'Alias ReserveOTHER7=Port7_SDI12_data(7)
+'Alias ReserveOTHER8=Port7_SDI12_data(8)
+'Alias ReserveOTHER9=Port7_SDI12_data(9)
+
+DataTable (Port7_SDI12,ReadPort(7),1000)
+  Sample (Port7_SDI12_NumVal,Port7_SDI12_data,IEEE4)
+
+EndTable
+DataTable (Port7_SDI12_Force,ForceRead(7),1000)
+  Sample (Port7_SDI12_NumVal,Port7_SDI12_data,IEEE4)
+EndTable
+#EndIf 'SDI12
+
+'=====================================================
+'PORT 8 DECLARATIONS, SUBS, TABLES
+'=====================================================
+#If UpperCase(Port8_Mode) = "CYCLEP"
+Public Port8_CycleP_data(17)
+DataTable (Port8_CycleP,True,1000)
+  Sample (17,Port8_CycleP_data,IEEE4)
+EndTable
+
+#ElseIf UpperCase(Port8_Mode) = "CYCLEN"
+Public Port8_CycleN_data(17)
+DataTable (Port8_CycleN,True,1000)
+  Sample (17,Port8_CycleN_data,IEEE4)
+EndTable
+
+#EndIf 'Port8_Mode
+
+BeginProg
+  Call WriteConfigToFile()
+
+  Scan (1,Sec,3,0)
+    If DEFAULT_TABLE_OUTPUT = TRUE
+      If IfTime (0,DEFAULT_SCANRATE ,Min)
+        If DEFAULT_PROC_TABLE_OUTPUT = TRUE
+          CallTable ProcData
+          '    writeDefaultTable = True
+        EndIf
+        If DEFAULT_RAW_TABLE_OUTPUT = TRUE
+          CallTable RawData
+        EndIf
+      EndIf
+    EndIf
+    '========================================
+    'Cellular Modem Power Control
+    'Parse schedule which is an array of paired on / off hours
+    'Evaluate if within any scheduled time
+    'OR result with AlwaysOn control
+    'Control SW12, modem power, accordingly
+    SplitStr (CellHrs,CellSchedule,",",24,5)
+    CellOn = 0 : i = 1
+    Do While CellHrs(i) <> NAN
+      CellOn = CellOn OR TimeIsBetween(CellHrs(i),CellHrs(i+1),24,Hr)
+      i += 2
+    Loop
+    SW12 (CellOn)
+
+    'Handle pausing timed measurements
+    'only allow program to be paused for X seconds
+    If Pause Then
+      PausedFor += 1
+      If PausedFor > 7200 Then Pause = FALSE
+    Else
+      PausedFor = 0
+      If IfTime (0,Port2_ScanRate,Min) Then ReadPort(2) = TRUE
+      If IfTime (0,Port4_ScanRate,Min) Then ReadPort(4) = TRUE'wipe before calling SUNA routines
+      If IfTime (0,Port3_ScanRate,Min) Then ReadPort(3) = TRUE
+      If IfTime (0,Port5_ScanRate,Min) Then ReadPort(5) = TRUE
+      If IfTime (0,Port6_ScanRate,Min) Then ReadPort(6) = TRUE
+      If IfTime (0,Port7_ScanRate,Min) Then ReadPort(7) = TRUE
+      If IfTime (0,Port8_ScanRate,Min) Then ReadPort(8) = TRUE
+    EndIf
+
+    'Loop to track how long the port has been forced on
+    For i = 1 To 8
+      If ForcePowerOn(i) Then
+        ForcePowerOnFor(i) += 1
+      Else
+        ForcePowerOnFor(i) = 0
+      EndIf
+      If ForcePowerOnFor(i) > 7200 Then ForcePowerOn(i) = FALSE
+    Next i
+
+  NextScan
+
+  SlowSequence
+
+  'turn everything off - just in case
+  CD8S() = FALSE
+  SDMCD16AC(CD8S,1,0)
+
+  'wait for 1 second
+  Delay (1,1,Sec)
+
+  'for any port that has been set to "always on" (-1)
+  'turn it on right away and leave it on
+  CD8S(2) = (Port2_WarmUp = -1)
+  CD8S(3) = (Port3_WarmUp = -1)
+  CD8S(5) = (Port5_WarmUp = -1)
+  CD8S(6) = (Port6_WarmUp = -1)
+  CD8S(7) = (Port7_WarmUp = -1)
+  CD8S(8) = (Port8_WarmUp = -1)
+  SDMCD16AC(CD8S,1,0)
+
+  'open up all com ports that could potentially be used
+  SerialOpen(Port2_ComPort,Port2_BaudRate,0,0,20000)
+  SerialOpen (Port3_ComPort,Port3_BaudRate,0,0,20000)
+  SerialOpen (Port5_Comport,Port5_BaudRate,0,0,20000)
+  SerialOpen (Port8_ComPort,Port8_BaudRate,0,0,20000)
+
+  Do
+    Delay (1,1,Sec)
+
+    Battery(DCP_VDC)
+    PanelTemp(DataloggerTemperature,250)
+    For ii = 1 To 8
+      'someone toggled force read
+      ' If ForceRead(ii) Then ReadPort(ii) = TRUE 'commented to alolow separate table for forceread off schedule and readport on schedule
+      'somone has set the force power on
+      If ForcePowerOn(ii) Then CD8S(ii) = TRUE
+      'force power has just transistioned from true to false
+      If ForcePowerOnLast(ii) = TRUE AND ForcePowerOn(ii) = FALSE Then CD8S(ii) = FALSE
+      ForcePowerOnLast(ii) = ForcePowerOn(ii)
+      'send an update
+      SDMCD16AC(CD8S,1,0)
+    Next ii
+
+    '========================================
+    'ALWAYS DO WIPE FIRST, BEFORE ANY OTHER READS
+    If ReadPort(4) OR ForceRead(4) Then
+      Dim k
+      'If Port3_NumWipes>1
+      ' if Port3_IntegratedWiper = "True"
+      For k=1 To Port3_NumWipes
+        CD8S(4) = TRUE
+        SDMCD16AC(CD8S,1,0)
+        Delay(1,10,SEC)
+        CD8S(4) = FALSE
+        SDMCD16AC(CD8S,1,0)
+        Delay(1,10,SEC)
+      Next k
+      'done
+      ReadPort(4) = FALSE
+      ForceRead(4) = FALSE
+    EndIf
+
+    '========================================
+    If ReadPort(2) OR ForceRead(2) Then
+
+      'if this port has warm up time, turn it on
+      'and delay
+      If Port2_WarmUp > 0 Then
+        CD8S(2) = TRUE
+        SDMCD16AC(CD8S,1,0)
+        Delay (1,Port2_WarmUp,Sec)
+      ElseIf Port2_WarmUp <10 AND Port2_WarmUp >0
+        Delay(1,10,sec)'minimum exo warm up time if just booted on using force read
+      EndIf
+
+      #If UpperCase(Port2_Mode) = "EXO2_SDI12"
+      Call EXO2_SDI12(Port2_EXO2_Data)
+      CallTable Port2_EXO2
+      CallTable Port2_EXO2_Force
+      #ElseIf UpperCase(Port2_Mode) = "EXO2_SERIAL"
+      Call EXO2_SERIAL(Port2_EXO2_Data,Port2_ComPort,"CRD:Port2_EXO2_" & Left(Public.Timestamp(4,1),10) & ".csv")
+      CallTable Port2_EXO2
+      CallTable Port2_EXO2_Force
+      #EndIf
+
+      'if this port has a warmup time, then assume
+      'power should be turned off when done
+      If Port2_WarmUp > 0 Then
+        CD8S(2) = FALSE
+        SDMCD16AC(CD8S,1,0)
+      EndIf
+
+      'done reading
+      ReadPort(2) = FALSE
+      ForceRead(2) = FALSE
+    EndIf
+
+    '========================================
+    If ReadPort(3) OR ForceRead(3) Then
+
+      'if this port has warm up time, turn it on and delay
+      If Port3_WarmUp > 0 Then
+        CD8S(3) = TRUE
+        SDMCD16AC(CD8S,1,0)
+        Delay (1,Port3_WarmUp,Sec)
+      EndIf
+
+      #If UpperCase(Port3_Mode) = "SUNAV1"
+      Call SUNA(Port3_SUNA_data,Port3_SUNA_Quality,Port3_ComPort,1,"CRD:Port3_SUNA_" & Left(Public.Timestamp(4,1),10) & ".csv")
+
+      CallTable Port3_SUNA_RAW
+      CallTable Port3_SUNA_Force
+      If Port3_SUNA_Quality > 0 AND NO3_FLAG Then Port3_SUNA_data() = NAN
+      CallTable Port3_SUNA
+
+      #ElseIf UpperCase(Port3_Mode) = "SUNAV2"
+      Call SUNA(Port3_SUNA_data,Port3_SUNA_Quality,Port3_ComPort,2,"CRD:Port3_SUNA_" & Left(Public.Timestamp(4,1),10) & ".csv")
+      CallTable Port3_SUNA_RAW
+      CallTable Port3_SUNA_Force
+      If Port3_SUNA_Quality > 0 AND NO3_FLAG Then Port3_SUNA_data() = NAN
+      '  If Port3_SUNA_Quality > 0 AND NO3_FLAG Then Port3_SUNA_data()=Port3_SUNA_data()'Port3_SUNA_data() = NAN
+
+      CallTable Port3_SUNA
+
+      #ElseIf UpperCase(Port3_Mode) = "SDI12"
+      'TODO: need to add logic to behave differently if issuing M!, C!, R!, etc.
+      'TODO: make some M!, C! routines possibly.
+      SDI12Recorder (Port3_SDI12_data,Port3_SDIPort,Port3_SDI12_Addr,Port3_SDI12_Cmd,1.0,0)
+      If Port3_SDI12_data(1) = NAN Then
+        Move (Port3_SDI12_data,Port3_SDI12_NumVal,NAN,1)
+      EndIf
+      CallTable Port3_SDI12
+      #ElseIf UpperCase(Port3_Mode) = "OBS501"
+      'TODO: need to add logic to behave differently if issuing M!, C!, R!, etc.
+      'TODO: make some M!, C! routines possibly.
+      Call obs501(Port3_SDI12_data)
+      CallTable Port3_SDI12
+
+      #ElseIf UpperCase(Port3_Mode) = "VOLTSE"
+      VoltSe (Port3_mV,1,mv5000,3,False,0,_60Hz,1.0,0)
+      Port3_Scaled = Port3_mV * Port3_VoltSE_Multiplier + Port3_VoltSE_Offset
+      CallTable Port3_VOLTSE
+      #ElseIf UpperCase(Port3_Mode) = "RS232"
+      Call Port3RS232(Port3_Comport,"CRD:Port3_RS232_" & Left(Public.Timestamp(4,1),10) & ".csv")
+      #EndIf
+
+      'if this port has a warmup time, then assume
+      'power should be turned off when done
+      If Port3_WarmUp > 0 Then
+        CD8S(3) = FALSE
+        SDMCD16AC(CD8S,1,0)
+      EndIf
+
+      'done reading
+      ReadPort(3) = FALSE
+      ForceRead(3) = FALSE
+    EndIf
+
+    '========================================
+    If ReadPort(5) OR ForceRead(5) Then
+      'if this port has warm up time, turn it on and delay
+      If Port5_WarmUp > 0 Then
+        CD8S(5) = TRUE
+        SDMCD16AC(CD8S,1,0)
+        Delay (1,Port5_WarmUp,Sec)
+      EndIf
+      #If UpperCase(Port5_Mode) = "CYCLEP"
+      Public CycleType
+      CycleType = 1'1 for cycle P; 2 for cycleN
+      Call Cycle(Port5_CycleP_data,Port5_Comport,CycleType)
+      'Call Cycle
+      CallTable Port5_CycleP
+
+      #ElseIf UpperCase(Port5_Mode) = "CYCLEN"
+      CycleType = 2'1 for cycle P; 2 for cycleN
+      Call Cycle(Port5_CycleN_data,Port5_Comport,CycleType)
+      'Call Cycle
+      CallTable Port5_CycleN
+      #ElseIf UpperCase(Port5_Mode) = "RS232"
+
+      Call Port5RS232(Port5data(12),Port5_Comport,"CRD:Port5_RS232_" & Left(Public.Timestamp(4,1),10) & ".csv")
+      #EndIf
+
+      'if this port has a warmup time, then assume
+      'power should be turned off when done
+      If Port5_WarmUp > 0 Then
+        CD8S(5) = FALSE
+        SDMCD16AC(CD8S,1,0)
+      EndIf
+
+      'done reading
+      ReadPort(5) = FALSE
+      ForceRead(5) = FALSE
+    EndIf
+
+    '========================================
+    If ReadPort(6) OR ForceRead(6) Then
+
+      'if this port has warm up time, turn it on and delay
+      If Port6_WarmUp > 0 Then
+        CD8S(6) = TRUE
+        SDMCD16AC(CD8S,1,0)
+        Delay (1,Port6_WarmUp,Sec)
+      EndIf
+
+      #If UpperCase(Port6_Mode) = "VOLTSE" Then
+      VoltSe (Port6_mV,1,mv5000,1,False,0,_60Hz,1.0,0)
+      Port6_Scaled = Port6_mV * Port6_VoltSE_Multiplier + Port6_VoltSE_Offset
+      CallTable Port6_VOLTSE
+
+      #EndIf
+
+      'if this port has a warmup time, then assume
+      'power should be turned off when done
+      If Port6_WarmUp > 0 Then
+        CD8S(6) = FALSE
+        SDMCD16AC(CD8S,1,0)
+      EndIf
+
+      'done
+      ReadPort(6) = FALSE
+      ForceRead(6) = FALSE
+    EndIf
+
+    '========================================
+    If ReadPort(7) OR ForceRead(7) Then
+
+      'if this port has warm up time, turn it on and delay
+      If Port7_WarmUp > 0 Then
+        CD8S(7) = TRUE
+        SDMCD16AC(CD8S,1,0)
+        Delay (1,Port7_WarmUp,Sec)
+      EndIf
+
+      #If UpperCase(Port7_Mode) =  "SDI12" OR UpperCase(Port7_Mode) =  "OBS501" Then
+      'TODO: need to add logic to behave differently if issuing M!, C!, R!, etc.
+      'TODO: make some M!, C! routines possibly.
+      SDI12Recorder (Port7_SDI12_data,Port7_SDIPort,Port7_SDI12_Addr,Port7_SDI12_Cmd,1.0,0)
+      If Port7_SDI12_data(1) = NAN Then
+        Move (Port7_SDI12_data,Port7_SDI12_NumVal,NAN,1)
+      EndIf
+      CallTable Port7_SDI12
+      CallTable Port7_SDI12_Force
+      #EndIf
+
+      '      #If UpperCase(Port7_Mode) =  "OBS501" Then
+      '      'TODO: need to add logic to behave differently if issuing M!, C!, R!, etc.
+      '      'TODO: make some M!, C! routines possibly.
+      'To do: Add support for the OBS501
+      '      SDI12Recorder (Port7_SDI12,Port7_SDIPort,Port7_SDI12_Addr,Port7_SDI12_Cmd,1.0,0)
+      '      If Port7_SDI12(1) = NAN Then
+      '        Move (Port7_SDI12,Port7_SDI12_NumVal,NAN,1)
+      '      EndIf
+      '      CallTable Port7_SDI12
+      '
+      '      #EndIf
+      'if this port has a warmup time, then assume
+      'power should be turned off when done
+      If Port7_WarmUp > 0 Then
+        CD8S(7) = FALSE
+        SDMCD16AC(CD8S,1,0)
+      EndIf
+
+      'done
+      ReadPort(7) = FALSE
+      ForceRead(7) = FALSE
+    EndIf
+
+    '========================================
+    If ReadPort(8) OR ForceRead(8) Then
+
+      'if this port has warm up time, turn it on and delay
+      If Port8_WarmUp > 0 Then
+        CD8S(8) = TRUE
+        SDMCD16AC(CD8S,1,0)
+        Delay (1,Port8_WarmUp,Sec)
+      EndIf
+
+      #If UpperCase(Port8_Mode) = "CYCLEP"
+      Public CycleType
+      CycleType = 1'1 for cycle P; 2 for cycleN
+      Call Cycle(Port8_CycleP_data,Port8_Comport,CycleType)
+      CallTable Port8_CycleP
+
+      #ElseIf UpperCase(Port8_Mode) = "CYCLEN"
+      CycleType = 2'1 for cycle P; 2 for cycleN
+      Call Cycle(Port8_CycleN_data,Port8_Comport,CycleType)
+      CallTable Port8_CycleN
+      #EndIf
+
+      'if this port has a warmup time, then assume
+      'power should be turned off when done
+      If Port8_WarmUp > 0 Then
+        CD8S(8) = FALSE
+        SDMCD16AC(CD8S,1,0)
+      EndIf
+
+      'done
+      ReadPort(8) = FALSE
+      ForceRead(8) = FALSE
+    EndIf
+
+  Loop
+
+  EndSequence
+EndProg
+
+'BeginProg
+'  SetStatus("StationName",Station_Name)
+'  'Default operational settings
+'  CellAlwaysOn = TRUE
+'  'Port1, turn on cell modem
+'  SW12(TRUE)
+'  Scan (1,Min,0,0)
+'    '========================================
+'    'Measure datalogger panel temperature and supply voltage
+'    PanelTemp (InternalTemp,250)
+'    Battery (BattV)
+'    '========================================
+'    'Determine if datalogger supply voltage has dropped
+'    'too low. If so, start shutting things down to conserve
+'    'TODO: Create on condition that is true LowBattLevel + X
+'    LowBattVAlarm = (BattV < LowBattLevel)
+'    If LowBattVAlarm Then
+'      'dispatch alerts to VIPs
+'      'turn off power to all ports controlled by SDM-CD8S
+'      'YSI has internal batteries and will keep going if system power is down
+'      Move (CD8S,ArrayLength(CD8S),FALSE,1) 'fill with false
+'      SDMCD16AC (CD8S,1,0)
+'      'ContinueScan 'skip to end of scan
+'    EndIf
+'    '========================================
+'    If UpperCase(Port2_Mode) = "EXO2" Then
+'      'reboot YSI EXO DCP SOA to prevent hanging, this is a work around
+'      If IfTime(12,24,hr) Then
+'        CD8S(2) = FALSE
+'        SDMCD16AC (CD8S,1,0)
+'        'TODO: Determine the minimum delay that will work; make as small as possible
+'        Delay (0,40,sec)
+'        CD8S(2) = TRUE
+'        SDMCD16AC (CD8S,1,0)
+'      EndIf
+'    EndIf
+

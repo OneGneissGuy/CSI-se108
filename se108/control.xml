@@ -1,0 +1,806 @@
+<control ini="se108.xml"
+		title="SE108 Device Configuration Utility"
+		icon="memory:se108.ico">
+
+	<device model="Raven XT"
+			present="RavenXT"
+			connect="memory:RavenXT/connect.html">
+	</device>
+
+	<device model="SC105"
+			present="SC105"
+			connect="memory:sc105/connect.html">
+	</device>
+	
+	<device model="OBS500"
+			present="OBS500"
+			connect="memory:obs500/connect.html">
+	</device>
+			
+	<device model="CR1000"
+			present="SE108"
+			connect="memory:se108_connect.html">
+
+		<constants tab-name="SE108 Configuration">
+
+			<program name="CPU:se108_main.cr1"
+					alternate="memory:se108_main.cr1" />
+			<program name="CPU:se108_settings.cr1"
+					alternate="memory:se108_settings.cr1" />
+	
+
+	<!-- ***** TAB: SYSTEM ******************** -->
+			<constant id="Station_Name"
+					name="Station Name"
+					length="63"
+					tab-name="System">
+			<description>
+			</description>
+			</constant>			
+
+			<constant id="LowBattLevel"
+					name="Low Battery Level"
+					type="float"
+					min="11"
+					max="13"
+					precision="4"
+					tab-name="System">
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="CellSchedule"
+					name="Cellular Active Schedule"
+					length="63"
+					tab-name="System">
+			<description>
+				This setting controls the cellar power schedule.
+				It is a comma separated list of hours (0 to 24) that
+				indicate when the device should be turned on and off.
+				The syntax is "on,off, ... on, off".
+				For example a entry of 8,10,14,17 would tell the system
+				to turn on the device at 8AM, off at 10AM, on at 2PM, and then
+				off again at 5PM until the next day at 8AM.
+			</description>
+			</constant>
+	<!-- ***** TAB: Port 2 ******************** -->
+			<constant id="Port2_Mode"
+					name="Mode"
+					type="choice"
+					as-string="true"
+					tab-name="Port 2">
+			<description>
+			</description>
+			<item name="Disable" value="DISABLE" />
+			<item name="EXO2 SDI-12" value="EXO2_SDI12" />
+			<item name="EXO2 Serial" value="EXO2_SERIAL" />
+			</constant>
+			
+			<constant id="Port2_ScanRate"
+					name="Scan Rate (min)"
+					type="long"
+					min="1"
+					max="720"
+					tab-name="Port 2">
+			<enable-expr>
+				Port2_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port2_WarmUp"
+					name="Warm Up (sec)"
+					type="long"
+					min="-1"
+					max="300"
+					tab-name="Port 2">
+			<enable-expr>
+				Port2_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			Minimum delay value is -1 for always on (necessary for internal logging to take place).
+			For power cycling, the delay should be greater than 10 seconds.Maximum value is 300 Seconds (5 minutes).
+			</description>
+			</constant>
+			<constant id="Port2_NumWipes"
+					name="# of Wipes"
+					type="long"
+					min="1"
+					max="3"
+					tab-name="Port 2">
+			<enable-expr>
+				Port2_Mode=$"EXO2_SERIAL"
+			</enable-expr>
+			<description>
+				This is the number of wipes to make prior to measurement.
+				Note that this increases the warm-up time.Only available in RS232 mode.
+			</description>
+			</constant>
+			<constant id="Port2_SDI12_Addr"
+					name="SDI12 Address"
+					length="1"
+					tab-name="Port 2">
+			<enable-expr>
+				Port2_Mode=$"EXO2_SDI12"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port2_BaudRate"
+					name="Serial Baud Rate"
+					type="choice"
+					tab-name="Port 2">
+			<enable-expr>
+				Port2_Mode=$"EXO2_SERIAL"
+			</enable-expr>
+			<description>
+				Choose the baud rate for the serial sensor connected to Port 2.		
+			</description>
+			<item name="9600" value="9600" />
+			<item name="19200" value="19200" />
+			<item name="38400" value="38400" />
+			<item name="57600" value="57600" />
+			<item name="115200" value="115200" />
+			</constant>	
+			
+			<constant id="Port2_MEASNUM"
+					name="# of Burst Samples"
+					type="long"
+					min="1"
+					max="300"
+					tab-name="Port 2">
+			<enable-expr>
+				Port2_Mode = $"EXO2_SERIAL"
+			</enable-expr>
+			<description>
+				This is the number of samples to be included in a burst measurement.
+			</description>			
+			</constant>
+			
+	<!-- ***** TAB: Port 3 ******************** -->
+			<constant id="Port3_Mode"
+					name="Mode"
+					type="choice"
+					as-string="true"
+					tab-name="Port 3">
+			<description>
+			</description>
+			<item name="Disable" value="DISABLE" />
+			<item name="SUNA v1" value="SUNAV1" />
+			<item name="SUNA v2" value="SUNAV2" />
+			<item name="OBS501" value="OBS501" />
+			<item name="SDI-12" value="SDI12" />
+			<item name="Serial RS-232" value="RS232" />
+			<item name="Voltage" value="VOLTSE" />
+			</constant>
+			
+			<constant id="Port3_SampleMode"
+					name="Sample Mode"
+					type="choice"
+					as-string="true"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SUNAV1" OR Port3_Mode=$"SUNAV2"
+			</enable-expr>
+			<description>
+				This setting must match the active deployment mode on the SUNA.
+				See the SUNA documentation for instructions on adjusting this setting.
+			</description>
+			<item name="Polled" value="POLLED" />
+			<item name="Continuous" value="CONTINUOUS" />			
+			</constant>
+			
+			<constant id="Port3_IntegratedWiper"
+					name="Integrated Wiper"
+					type="bool"
+					as-string="true"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SUNAV2"
+			</enable-expr>
+			<description>
+			</description>			
+			</constant>
+			
+			<constant id="Port3_NumWipes"
+					name="# of Wipes"
+					type="long"
+					min="1"
+					max="3"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SUNAV2" OR Port4_Wiper &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+				This is the number of wipes to make prior to measurement.
+				Note that this increases the warm-up time.
+			</description>
+			</constant>
+			
+			<constant id="Port3_delay"
+					name="Sample delay"
+					type="long"
+					min="250"
+					max="1500"
+					tab-name="Port 3">
+			<enable-expr>
+			Port3_Mode=$"SUNAV1" OR Port3_Mode=$"SUNAV2" OR Port3_Mode = $"RS232"
+			</enable-expr>
+			<description>
+				This is the delay between subsequent samples.
+				500 ms is the ideal setting for a sensor with no internal averaging at 38400 baud.
+			</description>
+			</constant>
+			
+			<constant id="Port4_Wiper"
+					name="Port 4 Wiper"
+					type="choice"
+					as-string="true"
+					tab-name="Port 3">
+			<enable-expr>
+			</enable-expr>
+			<description>
+			</description>
+			<item name="Disable" value="DISABLE" />
+			<item name="Enable" value="ENABLE" />
+			</constant>	
+	
+			<constant id="Port4_ScanRate"
+					name="Wipe Interval (min)"
+					type="long"
+					min="1"
+					max="1440"
+					tab-name="Port 3">
+			<enable-expr>
+				Port4_Wiper &lt;&gt; $"DISABLE" 
+			</enable-expr>			
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="Port3_ScanRate"
+					name="Scan Rate (min)"
+					type="long"
+					min="1"
+					max="720"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port3_WarmUp"
+					name="Warm Up (sec)"
+					type="long"
+					min="-1"
+					max="300"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SUNAV1" OR Port3_Mode=$"SUNAV2" OR Port3_Mode=$"RS232"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="Port3_BaudRate"
+					name="Serial Baud Rate"
+					type="choice"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SUNAV1" OR Port3_Mode=$"SUNAV2" OR Port3_Mode=$"RS232"
+			</enable-expr>
+			<description>
+			</description>
+			<item name="9600" value="9600" />
+			<item name="19200" value="19200" />
+			<item name="38400" value="38400" />
+			<item name="57600" value="57600" />
+			<item name="115200" value="115200" />
+			</constant>	
+			
+			<constant id="Port3_MEASNUM"
+					name="# of Burst Samples"
+					type="long"
+					min="1"
+					max="300"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SUNAV1" OR Port3_Mode=$"SUNAV2" OR Port3_Mode = $"RS232"
+			</enable-expr>
+			<description>
+				This is the number of samples to be included in a burst measurement.
+			</description>			
+			</constant>
+			
+			<constant id="Port3_AVGNUM"
+					name="# to Average"
+					type="long"
+					min="1"
+					max="300"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SUNAV1" OR Port3_Mode=$"SUNAV2" OR Port3_Mode = $"RS232"
+			</enable-expr>
+			<description>
+				This is the number of samples to be included in the burst statistics.
+				Note: this number must be less than the # of samples to be valid.Max is 300.
+			</description>
+			</constant>
+			
+			<constant id="Port3_SDI12_Addr"
+					name="SDI-12 Address"
+					length="1"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SDI12" OR Port3_Mode=$"OBS501" 
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port3_SDI12_Cmd"
+					name="SDI-12 Command"
+					length="16"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SDI12" OR Port3_Mode=$"OBS501"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="Port3_SDI12_NumVal"
+					name="SDI-12 Number of Values"
+					type="long"
+					min="1"
+					max="99"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"SDI12" OR Port3_Mode=$"OBS501"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port3_VoltSE_Multiplier"
+					name="Voltage Multiplier"
+					type="float"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"VOLTSE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>	
+
+			<constant id="Port3_VoltSE_Offset"
+					name="Voltage Offset"
+					type="float"
+					tab-name="Port 3">
+			<enable-expr>
+				Port3_Mode=$"VOLTSE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+	<!-- ***** TAB: Port 4 ******************** -->
+			
+
+	<!-- ***** TAB: Port 5 ******************** -->
+			<constant id="Port5_Mode"
+					name="Mode"
+					type="choice"
+					as-string="true"
+					tab-name="Port 5">
+			<description>
+			</description>
+			<item name="Disable" value="DISABLE" />
+			<item name="Cycle P" value="CYCLEP" />
+			<item name="Cycle N" value="CYCLEN" />
+			<item name="Serial RS-232" value="RS232" />
+			</constant>	
+
+			<constant id="Port5_ScanRate"
+					name="Scan Rate (min)"
+					type="long"
+					min="1"
+					max="720"
+					tab-name="Port 5">
+			<enable-expr>
+				Port5_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port5_WarmUp"
+					name="Warm Up (sec)"
+					type="long"
+					min="-1"
+					max="300"
+					tab-name="Port 5">
+			<enable-expr>
+				Port5_Mode &lt;&gt; $"DISABLE" OR Port5_Mode=$"RS232" 
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="Port5_BaudRate"
+					name="Serial Baud Rate"
+					type="choice"
+					tab-name="Port 5">
+			<enable-expr>
+				Port5_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			<item name="9600" value="9600" />
+			<item name="19200" value="19200" />
+			<item name="38400" value="38400" />
+			<item name="57600" value="57600" />
+			<item name="115200" value="115200" />
+			</constant>
+
+			<constant id="Port5_MEASNUM"
+					name="# of Burst Samples"
+					type="long"
+					min="1"
+					max="60"
+					tab-name="Port 5">
+			<enable-expr>
+				Port5_Mode=$"RS232"
+			</enable-expr>
+			<description>
+				This is the number of samples to be included in a burst measurement.
+			</description>			
+			</constant>
+			
+			<constant id="Port5_delay"
+					name="Sample delay"
+					type="long"
+					min="250"
+					max="5000"
+					tab-name="Port 5">
+			<enable-expr>
+				Port5_Mode=$"RS232"
+			</enable-expr>
+			<description>
+				This is the delay between subsequent samples.Range is 250 ms (4 Hz) to 5000 ms (0.2 Hz). 1000 ms (1 hz) is recommended for most sensors.
+			
+			</description>
+			</constant>
+	<!-- ***** TAB: Port 6 ******************** -->
+			<constant id="Port6_Mode"
+					name="Mode"
+					type="choice"
+					as-string="true"
+					tab-name="Port 6">
+			<description>
+			</description>
+			<item name="Disable" value="DISABLE" />
+			<item name="Voltage" value="VOLTSE" />
+			</constant>	
+
+			<constant id="Port6_ScanRate"
+					name="Scan Rate (min)"
+					type="long"
+					min="1"
+					max="720"
+					tab-name="Port 6">
+			<enable-expr>
+				Port6_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port6_WarmUp"
+					name="Warm Up (sec)"
+					type="long"
+					min="-1"
+					max="300"
+					tab-name="Port 6">
+			<enable-expr>
+				Port6_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="Port6_VoltSE_Multiplier"
+					name="Voltage Multiplier"
+					type="float"
+					tab-name="Port 6">
+			<enable-expr>
+				Port6_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port6_VoltSE_Offset"
+					name="Voltage Offset"
+					type="float"
+					tab-name="Port 6">
+			<enable-expr>
+				Port6_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>			
+			
+	<!-- ***** TAB: Port 7 ******************** -->
+			<constant id="Port7_Mode"
+					name="Mode"
+					type="choice"
+					as-string="true"
+					tab-name="Port 7">
+			<description>
+			</description>
+			<item name="Disable" value="DISABLE" />
+			<item name="SDI-12" value="SDI12" />
+			<item name="OBS501" value="OBS501" />
+			<item name="VSC100" value="VSC100" />
+			</constant>	
+
+			<constant id="Port7_ScanRate"
+					name="Scan Rate (min)"
+					type="long"
+					min="1"
+					max="720"
+					tab-name="Port 7">
+			<enable-expr>
+				Port7_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port7_WarmUp"
+					name="Warm Up (sec)"
+					type="long"
+					min="-1"
+					max="300"
+					tab-name="Port 7">
+			<enable-expr>
+				Port7_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="Port7_SDI12_Addr"
+					name="SDI-12 Address"
+					length="1"
+					tab-name="Port 7">
+			<enable-expr>
+				Port7_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="Port7_SDI12_Cmd"
+					name="SDI-12 Command"
+					length="16"
+					tab-name="Port 7">
+			<enable-expr>
+				Port7_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+			<constant id="Port7_SDI12_NumVal"
+					name="SDI-12 Number of Values"
+					type="long"
+					min="1"
+					max="99"
+					tab-name="Port 7">
+			<enable-expr>
+				Port7_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+			
+
+	<!-- ***** TAB: Port 8 ******************** -->
+			<constant id="Port8_Mode"
+					name="Port8 Mode"
+					type="choice"
+					as-string="true"
+					tab-name="Port 8">
+			<description-url href="memory:port8_mode.html" />
+			<item name="Disable" value="DISABLE" />
+			<item name="Cycle P" value="CYCLEP" />
+			<item name="Cycle N" value="CYCLEN" />
+			<item name="CC5MPX Camera" value="CC5MPX" />
+			<item name="Serial RS-232" value="RS232" />
+			</constant>	
+
+			<constant id="Port8_ScanRate"
+					name="Port8 Scan Rate (min)"
+					type="long"
+					min="1"
+					max="720"
+					tab-name="Port 8">
+			<enable-expr>
+				Port8_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+				Controls the frequency at which the attached sensor should be sampled. The scan rate interval is specified in minutes.
+			</description>
+			</constant>
+
+			<constant id="Port8_WarmUp"
+					name="Warm Up (sec)"
+					type="long"
+					min="-1"
+					max="300"
+					tab-name="Port 8">
+			<enable-expr>
+				Port8_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+				Specifies the amount of time, in seconds, power should be applied before reading the attached sensor.
+			</description>
+			</constant>			
+			
+			<constant id="Port8_BaudRate"
+					name="Serial Baud Rate"
+					type="choice"
+					tab-name="Port 8">
+			<enable-expr>
+				Port8_Mode &lt;&gt; $"DISABLE"
+			</enable-expr>
+			<description>
+			</description>
+			<item name="9600" value="9600" />
+			<item name="19200" value="19200" />
+			<item name="38400" value="38400" />
+			<item name="57600" value="57600" />
+			<item name="115200" value="115200" />
+			</constant>			
+		
+	<!-- ***** TAB: DEFAULT OUTPUT TABLES ******************** -->
+			<constant id="DEFAULT_TABLE_OUTPUT"
+					name="Default Table Enable"
+					type="bool"
+					tab-name="Default Tables">
+			<description>
+			</description>
+			</constant>	
+			
+			<constant id="DEFAULT_SCANRATE"
+					name="Default Table Scan Rate (min)"
+					type="long"
+					min="1"
+					max="720"
+					tab-name="Default Tables">
+			<enable-expr>
+				DEFAULT_TABLE_OUTPUT
+			</enable-expr>
+			<description>
+			</description>
+			</constant>	
+			
+			<constant id="DEFAULT_PROC_TABLE_OUTPUT"
+					name="Processed Default Table Output"
+					type="bool"
+					tab-name="Default Tables">
+			<enable-expr>
+				DEFAULT_TABLE_OUTPUT
+			</enable-expr>
+			<description>
+			</description>
+			</constant>		
+			
+			<constant id="DEFAULT_RAW_TABLE_OUTPUT"
+					name="Raw Default Table Output"
+					type="bool"
+					tab-name="Default Tables">
+			<enable-expr>
+				DEFAULT_TABLE_OUTPUT
+			</enable-expr>
+			<description>
+			</description>
+			</constant>	
+	<!-- ***** TAB: DATA FLAGS ******************** -->
+			<constant id="NO3_FLAG"
+					name="NO3 Quality Flagging Enabled"
+					type="bool"
+					tab-name="Data Flags">
+			<description>
+			</description>
+			</constant>
+					
+			<constant id="NO3_CV_LOW"
+					name="NO3 CV Low"
+					type="float"
+					tab-name="Data Flags">
+			<enable-expr>
+				NO3_FLAG
+			</enable-expr>
+			<description>
+				Low threshold for coefficient of variation.
+			</description>
+			</constant>
+			
+			<constant id="NO3_CV_HIGH"
+					name="NO3 CV High"
+					type="float"
+					tab-name="Data Flags">
+			<enable-expr>
+				NO3_FLAG
+			</enable-expr>
+			<description>
+				High threshold for coefficient of variation.
+			</description>
+			</constant>				
+			
+			<constant id="NO3_LOW_HARD"
+					name="NO3 Low Hard"
+					type="float"
+					tab-name="Data Flags">
+			<enable-expr>
+				NO3_FLAG
+			</enable-expr>
+			<description>
+			</description>
+			</constant>	
+			
+			<constant id="NO3_LOW_SOFT"
+					name="NO3 Low Soft"
+					type="float"
+					tab-name="Data Flags">
+			<enable-expr>
+				NO3_FLAG
+			</enable-expr>
+			<description>
+			</description>
+			</constant>	
+			
+			<constant id="NO3_HIGH_HARD"
+					name="NO3 High Hard"
+					type="float"
+					tab-name="Data Flags">
+			<enable-expr>
+				NO3_FLAG
+			</enable-expr>
+			<description>
+			</description>
+			</constant>	
+			
+			<constant id="NO3_HIGH_SOFT"
+					name="NO3 High Soft"
+					type="float"
+					tab-name="Data Flags">
+			<enable-expr>
+				NO3_FLAG
+			</enable-expr>
+			<description>
+			</description>
+			</constant>
+
+			<constant id="NO3_FIT_HIGH"
+					name="NO3 Fit High"
+					type="float"
+					tab-name="Data Flags">
+			<enable-expr>
+				NO3_FLAG
+			</enable-expr>
+			<description>
+			</description>
+			</constant>					
+			
+		</constants>
+	</device>	
+	
+</control>
