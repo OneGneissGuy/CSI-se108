@@ -1,2 +1,2 @@
 # se108
-se108 datalogger support files and device configuration utility scripts
+se108 datalogger device configuration utility scripts and support files
