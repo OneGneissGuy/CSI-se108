@@ -21,7 +21,7 @@ C:\Program Files (x86)\Campbellsci\DevConfig\devconfig.exe" --customise="c:\se10
 
 - SeaBird (Satlantic) SUNA V1 & V2, polled and continuous operating modes
 - Seabird (WetLabs) HydroCycle PO4
-- EXLEM (YSI) EXO operated in SDI12 or Serial (if a SDM-SI01 is present in the can and attaced to the DCP SOA on SDM channel 1) 
+- XYLEM (YSI) EXO operated in SDI12 or Serial (if a SDM-SI01 is present in the can and attaced to the DCP SOA on SDM channel 1) 
 - CSI OBS500/501
 - Any generic SDI12 v1.3+ Sensor
 - Any generic RS-232 sensor that outputs a datastream continuously 
