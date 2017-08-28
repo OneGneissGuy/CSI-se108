@@ -1,5 +1,5 @@
 # se108
-se108 datalogger device configuration utility scripts and support files
+se108 datalogger support information page.I addition to technical information, this page includes device configuration utility scripts and support files
 # Notes
 
 - Logger must be running OS>28
