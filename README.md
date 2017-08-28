@@ -6,6 +6,12 @@ se108 datalogger device configuration utility scripts and support files
 - Logger should have a CF card
 - This code supports EXO DCP-SOA v1
 
+# Electrical Components
+
+- Campbell Scientific CR1000 datalogger
+- SDM-CD8S solid state relay driver
+- SC105 I/O Serial adapter (x2)
+- 7x Crydom Solid State Relays capabile of driving 3A sensors
 
 # Directions
 
