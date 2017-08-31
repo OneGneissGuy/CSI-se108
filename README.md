@@ -4,7 +4,7 @@ Welcome to the se108 datalogger software repository. This repository maintains t
 
 # What is the SE108 and how do I use it?
 The SE108 is essenstially a submersible CR1000 datalogger equipped with power switching and communication peripherals. The se108 has a power input port, a telemetry port (Port 1) and seven sensor ports (Ports 2-8).
-The DCU is a GUI that makes it easy to setup the se108's input ports, change its sampling schedule and operate the se108 on site.
+The DCU is a GUI that makes it easy to setup the SE108's input ports, change its sampling schedule and operate the SE108 on site.
 
 ## SE108 port information
 
@@ -33,7 +33,7 @@ Port 2 | Xylem EXO water quality sonde
 Port 3 | Generic RS-232 or SDI-12 serial sensor (Satlantic SUNA pin compatible)
 Port 4 | Zebra-tech wiper
 Port 5 | Generic RS-232 serial (WETLabs digital sensor pin compatible)
-Port 6 | Generic analog input (Turner Designs C7 snesor pin compatible)
+Port 6 | Generic analog input (Turner Designs C7 sensor pin compatible)
 Port 7 | Generic SDI-12 sensor
 Port 8 | Generic RS-232 or SDI-12 serial sensor (Satlantic SUNA pin compatible)
 
@@ -131,7 +131,7 @@ Pin Number | Sensor Pin | Pin Function
 
 - Campbell Scientific CR1000 datalogger
 - SDM-CD8S solid state relay driver
-- SC105 I/O Serial adapter (x2)
+- SC105 I/O serial adapter (x2)
 - 7x Crydom Solid State Relays capable of driving 3A sensors
 
 # Directions
