@@ -12,7 +12,7 @@ The DCU is a GUI that makes it easy to setup the SE108's input ports, change its
 
 ### Bulkhead types by port 
 
-Port | Bulkhead part
+Port | Bulkhead
 ------------ | -------------
 Port 1 | MCBH-8-MP
 Port 2 | MCBH-6-FS 
