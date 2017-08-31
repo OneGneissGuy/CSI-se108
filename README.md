@@ -40,7 +40,7 @@ DevConfig\devconfig.exe" --customise="se108.zip
 # DCU Screenshots
 ## Splash screen
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-splash.jpg" width="800" height="800">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-splash.jpg" width="900" height="600">
 
 ## Configuration
 ### System Tab
@@ -49,8 +49,8 @@ DevConfig\devconfig.exe" --customise="se108.zip
 
 ### Port 2 Tab (EXO)
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="800" height="600">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="800" height="400">
 
 ### Port 7 Tab (OBS501)
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="800" height="600">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="800" height="400">
