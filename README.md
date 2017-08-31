@@ -1,9 +1,15 @@
-# se108
-Welcome to the se108 datalogger software repository. This repo houses technical information, device configuration utility (DCU) scripts, support files and instructions that are necessary to program the se108 and operate the DCU. The se108 has a power input port, a telemetry port (Port 1) and seven sensor ports (Ports 2-8). The Campbell Scientific SE108 is submerisble CR1000 datalogger equipped with power switching and communication peripherals.The se108 DCU is used to program the se108's input ports and sampling schedule.
+# Introduction
+
+Welcome to the se108 datalogger software repository. This repository maintains technical information, device configuration utility (DCU) support files, datalogger scripts, and setup instructions that are necessary to operate the Campbell Scientific SE108. 
+
+# What is the SE108 and how do I use it?
+The SE108 is essenstially a submersible CR1000 datalogger equipped with power switching and communication peripherals. The se108 has a power input port, a telemetry port (Port 1) and seven sensor ports (Ports 2-8).
+The DCU is a GUI that makes it easy to setup the se108's input ports, change its sampling schedule and operate the se108 on site.
+
+## SE108 port information
 
 <img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="445" height="440">
 
-## SE108 port information
 ### Bulkhead types by port 
 
 Port | Port function and sensor support
