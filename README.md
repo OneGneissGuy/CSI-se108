@@ -3,11 +3,123 @@ Welcome to the se108 datalogger software repository. This repo houses technical 
 
 <img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="445" height="440">
 
+## SE108 port information
+### Bulkhead types by port 
+
+Port | Port function and sensor support
+------------ | -------------
+Port 1 | MCBH-8-MP
+Port 2 | MCBH-6-FS 
+Port 3 | MCBH-8-FS
+Port 4 | MCBH-5-FS
+Port 5 | MCBH-4-FS
+Port 6 | MCBH-6-FS
+Port 7 | MCBH-3-FS
+Port 8 | MCBH-8-FS
+
+### Port function
+
+Port | Port function and sensor support
+------------ | -------------
+Power In | 12 volt, 3 amp power input (fused at 10 amp)
+Port 1 | RS-232 datalogger communications / SW12 output
+Port 2 | Xylem EXO water quality sonde 
+Port 3 | Generic RS-232 or SDI-12 serial sensor (Satlantic SUNA pin compatible)
+Port 4 | Zebra-tech wiper
+Port 5 | Generic RS-232 serial (WETLabs digital sensor pin compatible)
+Port 6 | Generic analog input (Turner Designs C7 snesor pin compatible)
+Port 7 | Generic SDI-12 sensor
+Port 8 | Generic RS-232 or SDI-12 serial sensor (Satlantic SUNA pin compatible)
+
+### Port pin mapping 
+
+#### Port 1
+
+Pin Number | Datalogger Pin | Pin Function
+------------ | ------------- | -------------
+1 | CR1000 G | Power Ground
+2 | CR1000 RS232 Pin 2 | RS-232 RXD 
+3 | CR1000 RS232 Pin 3 | RS-232 TXD 
+4 | CR1000 RS232 Pin 4 | RS-232 DTR
+5 | CR1000 RS232 Pin 5 | RS-232 Ground
+6 | CR1000 RS232 Pin 6 | RS-232 DSR
+7 | CR1000 RS232 Pin 7 | RS-232 RTS 
+8 | CR1000 SW12 | Switched 12 Volts
+
+#### Port 2
+Pin Number| EXO DCP-SOA Pin
+------------ | ------------- 
+1 | N/C
+2 | Red
+3 | Black
+4 | N/C
+5 | Yellow
+6 | White
+
+#### Port 3
+Pin Number | Pin | Pin Function
+------------ | ------------- | -------------
+1 | Relay 2 Pin 2 | Sensor Power In
+2 | Power Ground | Sensor Power GND
+3 | N/C | N/A
+4 | CR1000 Port C7 | SDI-12
+5 | CR1000 Com3-RX/Port C6 | RS232 TX
+6 | CR1000 Com3-TX/Port C5 | RS232 RX
+7 | CR1000 G | GND
+8 | N/C | N/A
+
+#### Port 4
+Pin Number | Wiper Board Pin
+------------ | -------------
+1 | 1
+2 | 2
+3 | 3
+4 | 4
+5 | 5
+
+#### Port 5
+Pin Number | Sensor Pin | Pin Function
+------------ | ------------- | -------------
+1 | Power Ground | Sensor Power Ground
+2 | Relay 4 Pin 2 | Sensor Power +
+3 | SC105 (SDC7) TX | Sensor RS232 RX
+4 | SC105 (SDC7) RX | Sensor RS232 TX
+
+#### Port 6
+Pin Number | Sensor Pin | Pin Function
+------------ | ------------- | -------------
+1 | Relay 5 Pin 2 | Sensor Power +
+2 | Power Ground | Sensor Power Ground
+3 | CR1000 SE1 | Sensor Signal +
+4 | CR1000 Analog Ground | Sensor Signal - 
+5 | CR1000 G | 10X gain
+6 | N/C | 100X gain 
+
+
+#### Port 7
+Pin Number | Sensor Pin | Pin Function
+------------ | ------------- | -------------
+1 | CR1000 C7 | SDI-12
+2 | Power Ground | Sensor Power Ground
+3 | Relay 6 Pin 2 | Sensor Power +
+
+#### Port 8
+Pin Number | Sensor Pin | Pin Function
+------------ | ------------- | -------------
+1 | Relay 6 Pin 7 | Sensor Power +
+2 | Power Ground | Sensor Power Ground
+3 | Power Ground  | N/A
+4 | N/C | N/A
+5 | SC105 (SDC8) RX | Sensor RS232 TX
+6 | SC105 (SDC8) TX | Sensor RS232 RX
+7 | N/C | N/A
+8 | N/C | N/A
+
 # Notes
 
 - Logger must be running OS>28
-- Logger should have a CF card
-- This code supports EXO DCP-SOA v1
+- Logger should have a 2GB CF card
+- This code supports EXO DCP-SOA v1. It can support v2, but code (se108main.cr1) will need to be updated to handle increased wake up delay time.
 
 # Electrical Components
 
