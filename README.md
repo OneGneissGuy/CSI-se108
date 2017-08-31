@@ -12,7 +12,7 @@ The DCU is a GUI that makes it easy to setup the SE108's input ports, change its
 
 ### Bulkhead types by port 
 
-Port | Port function and sensor support
+Port | Bulkhead part
 ------------ | -------------
 Port 1 | MCBH-8-MP
 Port 2 | MCBH-6-FS 
@@ -25,7 +25,7 @@ Port 8 | MCBH-8-FS
 
 ### Port function
 
-Port | Port function and sensor support
+Port | Port function and sensor
 ------------ | -------------
 Power In | 12 volt, 3 amp power input (fused at 10 amp)
 Port 1 | RS-232 datalogger communications / SW12 output
