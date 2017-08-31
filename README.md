@@ -51,6 +51,6 @@ DevConfig\devconfig.exe" --customise="se108.zip
 
 <img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="800" height="400">
 
-### Port 7 Tab (OBS501)
+### Port 7 Tab (SDi12)
 
 <img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="800" height="400">
