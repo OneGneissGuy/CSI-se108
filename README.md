@@ -1,7 +1,7 @@
 # se108
 se108 datalogger support information page. This page includes In addition to technical information, device configuration utility script, support files and instructions that are necessary to run the se108 device configuration utility.
 
-![SE108 bulkhead](/images/se180-bh.png)
+![SE108 bulkhead](/images/se180-bh.jpg)
 
 # Notes
 
