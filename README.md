@@ -121,18 +121,18 @@ Pin Number | Sensor Pin | Pin Function
 7 | N/C | N/A
 8 | N/C | N/A
 
-# Notes
-
-- Logger must be running OS>28
-- Logger should have a 2GB CF card
-- This code supports EXO DCP-SOA v1. It can support v2, but code (se108main.cr1) will need to be updated to handle increased wake up delay time.
-
 # Electrical Components
 
 - Campbell Scientific CR1000 datalogger
 - SDM-CD8S solid state relay driver
 - SC105 I/O serial adapter (x2)
 - 7x Crydom Solid State Relays capable of driving 3A sensors
+
+# Notes
+
+- Logger must be running OS>28
+- Logger should have a 2GB CF card
+- This code supports EXO DCP-SOA v1. It can support v2, but code (se108main.cr1) will need to be updated to handle increased wake up delay time.
 
 # Directions
 
