@@ -35,3 +35,10 @@ C:\Program Files (x86)\Campbellsci\DevConfig\devconfig.exe" --customise="c:\se10
 - CSI OBS500/501
 - Any generic SDI12 v1.3+ Sensor
 - Any generic RS-232 sensor that outputs a datastream continuously 
+
+
+# DCU Example Screenshots
+
+## Configuration
+### System Tab
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config.png" width="400" height="400">
