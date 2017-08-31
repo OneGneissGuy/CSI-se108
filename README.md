@@ -7,9 +7,9 @@ The SE108 is essenstially a submersible CR1000 datalogger equipped with power sw
 The DCU is a GUI that makes it easy to setup the SE108's input ports, change its sampling schedule and operate the SE108 on site.
 
 ## SE108 port information
-
+<kbd>
 <img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="445" height="440">
-
+</kbd>
 ### Bulkhead types by port 
 
 Port | Bulkhead
@@ -156,18 +156,18 @@ DevConfig\devconfig.exe" --customise="se108.zip
 
 ## Splash screen
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-splash.jpg" width="1024" height="576">
+<kbd><img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-splash.jpg" width="1024" height="576"></kbd>
 
 ## Configuration
 
 ### System Tab
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config.png" width="575" height="515">
+<kbd><img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config.png" width="575" height="515"></kbd>
 
 ### Port 2 Tab (EXO)
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="1024" height="576">
+<kbd><img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="1024" height="576"></kbd>
 
 ### Port 7 Tab (SDI-12)
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="850" height="425">
+<kbd><img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="850" height="425"></kbd>
