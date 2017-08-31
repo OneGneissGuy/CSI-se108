@@ -25,7 +25,7 @@ se108 datalogger support information page. This page includes In addition to tec
 
 Here is an example of the target field:
 
-C:\Program Files (x86)\Campbellsci\DevConfig\devconfig.exe" --customise="c:\se108\se108.zip
+DevConfig\devconfig.exe" --customise="se108.zip
 
 # Supported sensors
 
@@ -37,8 +37,20 @@ C:\Program Files (x86)\Campbellsci\DevConfig\devconfig.exe" --customise="c:\se10
 - Any generic RS-232 sensor that outputs a datastream continuously 
 
 
-# DCU Example Screenshots
+# DCU Screenshots
+## Splash screen
+
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-splash.jpg" width="800" height="800">
 
 ## Configuration
 ### System Tab
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config.png" width="400" height="400">
+
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config.png" width="800" height="600">
+
+### Port 2 Tab (EXO)
+
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="800" height="600">
+
+### Port 7 Tab (OBS501)
+
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="800" height="600">
