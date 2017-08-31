@@ -1,7 +1,8 @@
 # se108
 se108 datalogger support information page. This page includes In addition to technical information, device configuration utility script, support files and instructions that are necessary to run the se108 device configuration utility.
 
-![SE108 bulkhead](https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg?raw=true "SE108 bulkhead showing input ports" {width=400px height=400px})
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="400" height="400">
+
 
 # Notes
 
