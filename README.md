@@ -1,7 +1,7 @@
 # se108
 Welcome to the se108 datalogger software repository. This repo houses technical information, device configuration utility (DCU) scripts, support files and instructions that are necessary to program the se108 and operate the DCU. The se108 has a power input port, a telemetry port (Port 1) and 7 sensor ports (Ports 2-8). The Campbell Scientific SE108 is submerisble CR1000 datalogger equipped with power switching and communication peripherals.The se108 DCU is used to program the se108's input ports and sampling schedule.
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="400" height="400">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="445" height="440">
 
 # Notes
 
@@ -38,18 +38,18 @@ DevConfig\devconfig.exe" --customise="se108.zip
 
 ## Splash screen
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-splash.jpg" width="900" height="600">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-splash.jpg" width="1024" height="576">
 
 ## Configuration
 
 ### System Tab
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config.png" width="800" height="600">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config.png" width="575" height="515">
 
 ### Port 2 Tab (EXO)
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="800" height="400">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port2-exo2.jpg" width="1024" height="576">
 
-### Port 7 Tab (SDi12)
+### Port 7 Tab (SDI-12)
 
-<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="800" height="400">
+<img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-config-port7.png" width="850" height="425">
