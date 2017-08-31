@@ -1,5 +1,5 @@
 # se108
-Welcome to the se108 datalogger software repository. This repo houses technical information, device configuration utility (DCU) scripts, support files and instructions that are necessary to program the se108 and operate the DCU. The se108 has a power input port, a telemetry port (Port 1) and 7 sensor ports (Ports 2-8). The Campbell Scientific SE108 is submerisble CR1000 datalogger equipped with power switching and communication peripherals.The se108 DCU is used to program the se108's input ports and sampling schedule.
+Welcome to the se108 datalogger software repository. This repo houses technical information, device configuration utility (DCU) scripts, support files and instructions that are necessary to program the se108 and operate the DCU. The se108 has a power input port, a telemetry port (Port 1) and seven sensor ports (Ports 2-8). The Campbell Scientific SE108 is submerisble CR1000 datalogger equipped with power switching and communication peripherals.The se108 DCU is used to program the se108's input ports and sampling schedule.
 
 <img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="445" height="440">
 
@@ -60,12 +60,12 @@ Pin Number| EXO DCP-SOA Pin
 Pin Number | Pin | Pin Function
 ------------ | ------------- | -------------
 1 | Relay 2 Pin 2 | Sensor Power In
-2 | Power Ground | Sensor Power GND
-3 | N/C | N/A
+2 | Power Ground | Sensor Power Ground
+3 | Power Ground | Sensor Communication Ground
 4 | CR1000 Port C7 | SDI-12
 5 | CR1000 Com3-RX/Port C6 | RS232 TX
 6 | CR1000 Com3-TX/Port C5 | RS232 RX
-7 | CR1000 G | GND
+7 | CR1000 SE3 | Sensor analog signal +
 8 | N/C | N/A
 
 #### Port 4
@@ -108,7 +108,7 @@ Pin Number | Sensor Pin | Pin Function
 ------------ | ------------- | -------------
 1 | Relay 6 Pin 7 | Sensor Power +
 2 | Power Ground | Sensor Power Ground
-3 | Power Ground  | N/A
+3 | Power Ground | Sensor Communication Ground
 4 | N/C | N/A
 5 | SC105 (SDC8) RX | Sensor RS232 TX
 6 | SC105 (SDC8) TX | Sensor RS232 RX
