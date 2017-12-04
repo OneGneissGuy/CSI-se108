@@ -10,6 +10,7 @@ The DCU is a GUI that makes it easy to setup the SE108's input ports, change its
 <kbd>
 <img src="https://github.com/OneGneissGuy/CSI-se108/blob/master/images/se108-bh.jpg" width="445" height="440">
 </kbd>
+
 ### Bulkhead types by port 
 
 Port | Bulkhead
