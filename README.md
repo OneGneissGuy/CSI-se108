@@ -15,7 +15,7 @@ The DCU is a GUI that makes it easy to setup the SE108's input ports, change its
 
 Port | Bulkhead
 ------------ | -------------
-Power In | VMG-2-BCL
+Power In | VSG-2-BCL or VMG-2-BCL (metal)
 Port 1 | MCBH-8-MP
 Port 2 | MCBH-6-FS 
 Port 3 | MCBH-8-FS
